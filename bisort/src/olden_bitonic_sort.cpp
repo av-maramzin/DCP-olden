@@ -2,9 +2,10 @@
 
 /* =================== PROGRAM bitonic===================== */
 /* UP - 0, DOWN - 1 */
-#include "node.h"   /* Node Definition */
-#include "proc.h"   /* Procedure Types/Nums */
-#include <stdio.h>
+#include "olden_bitonic_sort.h"   /* Node Definition */
+#include <cstdio>
+#include <ctime>
+#include <cstdlib>
 
 #define CONST_m1 10000
 #define CONST_b 31415821
@@ -32,14 +33,12 @@ void InOrder(HANDLE *h) {
     l = h->left;
     r = h->right;
     InOrder(l);
-    static unsigned char counter = 0;
-    if (counter++ == 0)   /* reduce IO */
-      printf("%d @ 0x%x\n",h->value, 0);
+    printf("%d ", h->value);
     InOrder(r);
   }
 }
 
-int mult(int p, int q) {
+static int mult(int p, int q) {
   int p1, p0, q1, q0;
 	
   p1 = p/CONST_m1; p0 = p%CONST_m1;
@@ -48,7 +47,7 @@ int mult(int p, int q) {
 }
 
 /* Generate the nth random # */
-int skiprand(int seed, int n) {
+static int skiprand(int seed, int n) {
   for (; n; n--) seed=random(seed);
   return seed;
 }
@@ -82,7 +81,7 @@ HANDLE* RandTree(int n, int seed, int node, int level) {
   return h;
 }
 
-void SwapValue(HANDLE *l, HANDLE *r) {
+static void SwapValue(HANDLE *l, HANDLE *r) {
   int temp,temp2;
   
   temp = l->value;
@@ -91,15 +90,7 @@ void SwapValue(HANDLE *l, HANDLE *r) {
   l->value = temp2;
 } 
 
-void
-/***********/
-SwapValLeft(l,r,ll,rl,lval,rval)
-/***********/
-HANDLE *l;
-HANDLE *r;
-HANDLE *ll;
-HANDLE *rl;
-int lval, rval;
+static void SwapValLeft(HANDLE *l, HANDLE *r, HANDLE *ll, HANDLE *rl, int lval, int rval)
 {
   r->value = lval;
   r->left = ll;
@@ -108,15 +99,7 @@ int lval, rval;
 } 
 
 
-void
-/************/
-SwapValRight(l,r,lr,rr,lval,rval)
-/************/
-HANDLE *l;
-HANDLE *r;
-HANDLE *lr;
-HANDLE *rr;
-int lval, rval;
+static void SwapValRight(HANDLE *l, HANDLE *r, HANDLE *lr, HANDLE *rr, int lval, int rval)
 {  
   r->value = lval;
   r->right = lr;
@@ -125,14 +108,9 @@ int lval, rval;
   /*printf("Swap Val Right l 0x%x,r 0x%x val: %d %d\n",l,r,lval,rval);*/
 } 
 
-int
-/********************/
-Bimerge(root,spr_val,dir)
-/********************/
-HANDLE *root;
-int spr_val,dir;
-
-{ int rightexchange;
+static int Bimerge(HANDLE *root, int spr_val, int dir)
+{ 
+    int rightexchange;
   int elementexchange;
   HANDLE *pl,*pll,*plr;
   HANDLE *pr,*prl,*prr;
@@ -200,16 +178,11 @@ int spr_val,dir;
   return spr_val;
 } 
 
-int
-/*******************/
-Bisort(root,spr_val,dir)
-/*******************/
-HANDLE *root;
-int spr_val,dir;
-
-{ HANDLE *l;
-  HANDLE *r;
-  int val;
+int Bisort(HANDLE *root, int spr_val, int dir)
+{ 
+    HANDLE *l;
+    HANDLE *r;
+    int val;
   /*printf("bisort %x\n", root);*/
   if ((root->left == NIL))  /* <---- 8.7% load penalty */
     { 
@@ -235,48 +208,3 @@ int spr_val,dir;
   /*printf("exit bisort %x\n", root);*/
   return spr_val;
 } 
-
-int main(int argc, char **argv) {
-  HANDLE *h;
-  int sval;
-  int n;
-   
-  n = dealwithargs(argc,argv);
-
-  printf("Bisort with %d size of dim %d\n", n, NDim);
-
-  h = RandTree(n,12345768,0,0);
-  sval = random(245867) % RANGE;
-  if (flag) {
-    InOrder(h);
-    printf("%d\n",sval);
-  }
-  printf("**************************************\n");
-  printf("BEGINNING BITONIC SORT ALGORITHM HERE\n");
-  printf("**************************************\n");
-
-  sval=Bisort(h,sval,0);
-
-  if (flag) {
-    printf("Sorted Tree:\n"); 
-    InOrder(h);
-    printf("%d\n",sval);
-  }
-
-  sval=Bisort(h,sval,1);
-
-  if (flag) {
-    printf("Sorted Tree:\n"); 
-    InOrder(h);
-    printf("%d\n",sval);
-  }
-
-  return 0;
-} 
-
-
-
-
-
-
-
