@@ -26,6 +26,7 @@ Grid::Grid(const int size, const double elementSize)
 
 void Grid::mapImage(Image& image) {
 
+#pragma omp parallel for
     for(int i = 0; i < grid.size(); i++) {
         GridElement& elem = grid[i];
         
@@ -53,8 +54,10 @@ int Image::perimeter() {
         Grid& g = *this->grid;    
         double perim = 0;
         static int flips = 0;
-        
-        for(int row = 0; row < g.size; row++) {
+       
+        int row;
+#pragma omp parallel for private(row) schedule(dynamic) reduction(+:perim)
+        for(row = 0; row < g.size; row++) {
             for (int column = 0; column < g.size; column++) {
                 if ( g.grid[row*g.size + column].color != g.grid[row*g.size + column+1].color ) {
                     // change of the color -> current element is on 
