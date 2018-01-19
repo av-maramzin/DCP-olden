@@ -1,8 +1,96 @@
 /* For copyright information, see olden_v1.0/COPYRIGHT */
 
 #include "perimeter.h"
-#include <stdio.h>
-#include <stdlib.h>
+
+#include <cstdlib>
+
+static int CheckOutside(int x, int y) 
+{
+  int euclid = x*x+y*y;
+
+  if (euclid > 4194304) return 1;  
+  if (euclid < 1048576) return -1; 
+  return 0;
+}
+
+static int CheckIntersect(int center_x, int center_y, int size)
+{
+  int sum;
+  
+  if (!CheckOutside(center_x+size,center_y+size) &&
+      !CheckOutside(center_x+size,center_y-size) &&
+      !CheckOutside(center_x-size,center_y-size) &&
+      !CheckOutside(center_x-size,center_y+size)) return 2;
+  sum=CheckOutside(center_x+size,center_y+size) +
+    CheckOutside(center_x+size,center_y-size) +
+      CheckOutside(center_x-size,center_y-size) +
+	CheckOutside(center_x-size,center_y+size);
+  if ((sum==4) || (sum==-4)) return 0;
+  return 1;
+}  
+
+QuadTree MakeTree(int size, int center_x, int center_y, int lo_proc,
+		  int hi_proc, QuadTree parent, ChildType ct, int level) 
+{
+  int intersect=0;
+  QuadTree retval;
+
+  retval = (QuadTree) malloc(sizeof(*retval));
+  retval->parent = parent;
+  retval->childtype = ct;
+
+  intersect = CheckIntersect(center_x,center_y,size);
+  size = size/2;
+  if ((intersect==0) && (size<512))
+      {
+      retval->color = white;
+      retval->nw = NULL;
+      retval->ne = NULL;
+      retval->sw = NULL;
+      retval->se = NULL;
+    }
+  else if (intersect==2) 
+    {
+      retval->color=black;
+      retval->nw = NULL;
+      retval->ne = NULL;
+      retval->sw = NULL;
+      retval->se = NULL;
+    }
+  else 
+    {
+      if (!level)
+	{
+	  retval->color = black;
+	  retval->nw = NULL;
+	  retval->ne = NULL;
+	  retval->sw = NULL;
+	  retval->se = NULL;
+	}
+      else 
+	{
+	  int mid1,mid2;
+
+      mid1 = (lo_proc+hi_proc)/2;
+	  mid2 = (lo_proc+hi_proc+1)/2;
+
+	  retval->sw = MakeTree(size,center_x-size,center_y-size,
+				(mid2+hi_proc+1)/2,hi_proc,retval,
+				southwest,level-1);
+	  retval->se = MakeTree(size,center_x+size,center_y-size,
+				mid2,(mid2+hi_proc)/2,retval,
+				southeast,level-1);
+	  retval->ne = MakeTree(size,center_x+size,center_y+size,
+				(lo_proc+mid1+1)/2,mid1,retval,
+				northeast,level-1);
+	  retval->nw = MakeTree(size,center_x-size,center_y+size,
+				lo_proc,(lo_proc+mid1)/2,retval,
+				northwest,level-1);
+	  retval->color = grey;
+	}
+    }
+  return retval;
+}
 
 static int adj(Direction d, ChildType ct)
 {
@@ -33,11 +121,6 @@ static ChildType reflect(Direction d, ChildType ct)
 	  return southwest;
 	case southwest:
 	  return southeast;
-#ifdef DEBUG
-	default:
-	  printf("\nbug in reflect() \n");
-	  exit(1);
-#endif
 	}
     }
   switch(ct) 
@@ -50,11 +133,6 @@ static ChildType reflect(Direction d, ChildType ct)
       return northeast;
     case southwest:
       return northwest;
-#ifdef DEBUG
-    default:
-      printf("\n bug2 in reflect() \n");
-      exit(1);
-#endif
     }
 }
 
@@ -83,10 +161,6 @@ static QuadTree child(QuadTree tree, ChildType ct)
     case southwest:
       return tree->sw;
     default:
-#ifdef DEBUG
-      printf("\n bug in child()\n");
-      exit(1);
-#endif
       return 0;
     }
 }
@@ -129,11 +203,7 @@ int perimeter(QuadTree tree, int size)
   if (tree->color==grey) 
     {
       QuadTree child;
-#ifdef FUTURES
-      future_cell_int fc_sw,fc_se,fc_ne;
-#endif
 
-#ifndef FUTURES
       child = tree->sw;
       retval += perimeter(child,size/2);
       child = tree->se;
@@ -142,20 +212,6 @@ int perimeter(QuadTree tree, int size)
       retval += perimeter(child,size/2);
       child = tree->nw;
       retval += perimeter(child,size/2);
-#else
-      child = tree->sw;
-      FUTURE(child,size/2,perimeter,&fc_sw);
-      child = tree->se;
-      FUTURE(child,size/2,perimeter,&fc_se);
-      child = tree->ne;
-      FUTURE(child,size/2,perimeter,&fc_ne);
-      child = tree->nw;
-      retval = perimeter(child,size/2);
-      TOUCH(&fc_sw);
-      TOUCH(&fc_se);
-      TOUCH(&fc_ne);
-      retval += fc_sw.value + fc_se.value + fc_ne.value;
-#endif
     }
   else if (tree->color==black)
     {
@@ -182,77 +238,3 @@ int perimeter(QuadTree tree, int size)
     }
   return retval;
 }
-
-extern int dealwithargs(int argc, char * argv[]);
-
-int main(int argc, char *argv[])
-{
-  QuadTree tree;
-  int count;
-  int level;
-
-#ifndef TORONTO
-#ifdef FUTURES
-  SPMDInit();
-#else
-  filestuff();
-#endif
-#endif
-
-#ifdef DEBUG
-  printf("main.nopf.c: sizeof(quad_struct)=%d\n", sizeof(quad_struct));
-#endif
-
-  level = dealwithargs(argc,argv);
-
-#ifndef TORONTO
-  chatting("Perimeter with %d levels on %d processors\n",level,__NumNodes);
-  tree=MakeTree(2048,0,0,0,__NumNodes-1,NULL,southeast,level);
-#else
-  chatting("Perimeter with %d levels on %d processors\n",level,NumNodes);
-  tree=MakeTree(2048*1024,0,0,0,NumNodes-1,NULL,southeast,level);
-#endif
-
-#ifdef DEBUG
-  printf("After MakeTree(2048...), tree=%p *tree is: color=%d  childtype=%d nw=%p ne=%p sw=%p se=%p parent=%p\n", tree, tree->color, tree->childtype, tree->nw, tree->ne, tree->sw, tree->se, tree->parent);
-#endif
-
-  count=CountTree(tree);
-  chatting("# of leaves is %d\n",count);
-
-#ifndef TORONTO
-  ClearAllStats();
-
-  CMMD_node_timer_clear(0);
-  CMMD_node_timer_start(0);
-#endif
-
-#ifndef TORONTO
-  count=perimeter(tree,4096);
-#else
-  count=perimeter(tree,4096);
-#endif
-
-#ifndef TORONTO
-  CMMD_node_timer_stop(0);
-#endif
-
-  chatting("perimeter is %d\n",count);
-
-#ifndef TORONTO
-  chatting("Time elapsed = %f seconds\n",CMMD_node_timer_elapsed(0));
-#ifdef FUTURES
-  __ShutDown();
-#endif
-#endif
-
-  exit(0);
-}
-
-
-
-
-
-
-
-
