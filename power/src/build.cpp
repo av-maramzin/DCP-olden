@@ -10,7 +10,11 @@
  * University of California at Berkeley
  */
 
-#include "power.h"
+#include "power_original.h"
+#include <cmath>
+#include <cstdlib>
+
+namespace original {
 
 Root build_tree() 
 {
@@ -36,7 +40,7 @@ Lateral build_lateral(int i, int num)
   Branch b;
   Lateral next;
  
-  if (num == 0) return NULL;
+  if (num == 0) return nullptr;
   l = (Lateral) malloc(sizeof(*l));
 
   next = build_lateral(i,num-1);
@@ -57,7 +61,7 @@ Branch build_branch(int i, int j, int num)
   Leaf l;
   Branch b;
 
-  if (num == 0) return NULL;
+  if (num == 0) return nullptr;
   /* allocate branch */
   b = (Branch) malloc(sizeof(*b));
   
@@ -85,3 +89,5 @@ Leaf build_leaf() {
   l->D.Q = 1.0;
   return l;
 }
+
+}; // namespace original

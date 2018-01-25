@@ -1,0 +1,25 @@
+#ifndef DEFINES_H
+#define DEFINES_H
+
+#ifdef SMALL_PROBLEM_SIZE   /* __llvm__ SCALED BACK SETTINGS */
+
+#define NUM_FEEDERS 8
+#define LATERALS_PER_FEEDER 16
+#define BRANCHES_PER_LATERAL 5
+#define LEAVES_PER_BRANCH 10
+
+#else
+
+#define NUM_FEEDERS 11
+#define LATERALS_PER_FEEDER 21
+#define BRANCHES_PER_LATERAL 6
+#define LEAVES_PER_BRANCH 12
+
+#endif
+
+#define F_EPSILON 0.000001
+#define G_EPSILON 0.000001
+#define H_EPSILON 0.000001
+#define ROOT_EPSILON 0.00001
+
+#endif // ifndef DEFINES_H

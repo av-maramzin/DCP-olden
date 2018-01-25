@@ -11,8 +11,13 @@
  *
  */
 
-#include "power.h"
+#include "power_original.h"
+#include <cmath>
 
+#include <iostream>
+using namespace std;
+
+namespace original {
 /*----------------------------------------------------------------------*/
 /* Leaf optimization 'global' variables               */
 
@@ -67,13 +72,14 @@ Demand Compute_Lateral(Lateral l, double theta_R, double theta_I,
   new_pi_I = pi_I + l->beta*(theta_I+(theta_R*l->R)/l->X);
 
   next = l->next_lateral;
-  if (next != NULL) 
+  if (next != nullptr) 
     a1 = Compute_Lateral(next,theta_R,theta_I,new_pi_R,new_pi_I);
+
 
   br = l->branch;
   a2 = Compute_Branch(br,theta_R,theta_I,new_pi_R,new_pi_I);
 
-  if (next != NULL) {
+  if (next != nullptr) {
     l->D.P = a1.P + a2.P;
     l->D.Q = a1.Q + a2.Q;
   } else {
@@ -112,9 +118,10 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
   new_pi_I = pi_I + br->beta*(theta_I+(theta_R*br->R)/br->X);
 
   next = br->next_branch;
-  if (next != NULL)  {
+  if (next != nullptr)  {
     a1 = Compute_Branch(next,theta_R,theta_I,new_pi_R,new_pi_I);
   }
+
 
   /* Initialize tmp */
   tmp.P = 0.0; tmp.Q = 0.0;
@@ -125,7 +132,7 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
     tmp.P += a2.P;
     tmp.Q += a2.Q;
   }
-  if (next != NULL) {
+  if (next != nullptr) {
     br->D.P = a1.P + tmp.P;
     br->D.Q = a1.Q + tmp.Q;
   } else {
@@ -134,7 +141,7 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
   }
 
   /* compute P,Q */
-  a = br->R*br->R + br->X*br->X;  
+  a = br->R*br->R + br->X*br->X;
   b = 2*br->R*br->X*br->D.Q - 2*br->X*br->X*br->D.P - br->R;
   c = br->R*br->D.Q - br->X*br->D.P;
   c = c*c + br->R*br->D.P;
@@ -146,7 +153,6 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
   b = 2*br->X*br->D.Q;
   br->alpha = a/(1-a-b);
   br->beta = b/(1-a-b);
-
   return br->D;
 }
 
@@ -162,6 +168,7 @@ Demand Compute_Leaf(Leaf l, double pi_R, double pi_I) {
   }
   l->D.P = P;
   l->D.Q = Q;
+
   return l->D;
 }
 
@@ -329,3 +336,5 @@ double make_orthogonal (double* v_mod, double* v_static)
 }
 
 /*----------------------------------------------------------------------*/
+
+}; // namespace original

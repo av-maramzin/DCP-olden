@@ -11,11 +11,14 @@
  *
  */
 
-#include "power.h"
-#include <stdio.h>
+#include "power_original.h"
+#include "defines.h"
+#include <cstdio>
+#include <cmath>
+using namespace original;
 
 /* Domain of thetaR->P map is 0.65 to 1.00 [index*0.01+0.65] */
-double map_P[36] =
+static double map_P[36] =
 {8752.218091048, 8446.106670416, 8107.990680283,
  7776.191574285, 7455.920518777, 7146.602181352,
  6847.709026813, 6558.734204024, 6279.213382291,
@@ -34,7 +37,7 @@ double map_P[36] =
 #define      MAX_THETA_R       0.995
 
 /* Domain of thetaI->Q map is 0.130 to 0.200 [index*0.002+0.130] */
-double map_Q[36] =
+static double map_Q[36] =
 {1768.846590190, 1706.229490046, 1637.253873079,
  1569.637451623, 1504.419525242, 1441.477913810,
  1380.700660446, 1321.980440476, 1265.218982201,
@@ -52,55 +55,74 @@ double map_Q[36] =
 #define      PER_INDEX_I       0.002
 #define      MAX_THETA_I       0.199
 
-int main(int argc,char *argv[])
-{
-  Root r;
-  int i,finished=0;
-  double d_theta_R,d_theta_I;
-
-  printf("Past initialization\n");
-
-  /* initial pass */
-  r = build_tree();
-  printf("Built tree\n");
-  Compute_Tree(r);
-  printf("COMPUTED TREE\n");
-  r->last.P = r->D.P;
-  r->last.Q = r->D.Q;
-  r->last_theta_R = r->theta_R;
-  r->last_theta_I = r->theta_I;
-  r->theta_R = 0.7;
-  r->theta_I = 0.14;
-  
-  while (!finished) {
-    Compute_Tree(r);
-    printf("TR=%4.2f, TI=%4.2f, P0=%4.2f, Q0=%4.2f\n",
-           r->theta_R,r->theta_I,r->D.P,r->D.Q);
-    if (fabs(r->D.P/10000.0 - r->theta_R) < ROOT_EPSILON &&
-        fabs(r->D.Q/10000.0 - r->theta_I) < ROOT_EPSILON) {
-      finished = 1;
+static bool check_error(Root r) {
+    using namespace original;
+    if ( fabs(r->D.P/10000.0 - r->theta_R) < ROOT_EPSILON &&
+         fabs(r->D.Q/10000.0 - r->theta_I) < ROOT_EPSILON ) {
+        return true;
     } else {
-      i = (int)((r->theta_R - MIN_THETA_R) / PER_INDEX_R);
-      if (i<0) i=0;
-      if (i>35) i=35;
-      d_theta_R = -(r->theta_R - r->D.P/10000.0) /
-        (1 - (map_P[i+1] - map_P[i]) / (PER_INDEX_R * 10000.0));
+        return false;
+    }
+}
 
-      i = (int)((r->theta_I - MIN_THETA_I) / PER_INDEX_I);
-      if (i<0) i=0;
-      if (i>35) i=35;
-      d_theta_I = -(r->theta_I - r->D.Q/10000.0) /
+static void change_thetas(Root r) {
+    using namespace original;
+    int i;
+    double d_theta_R, d_theta_I;
+
+    i = (int)((r->theta_R - MIN_THETA_R) / PER_INDEX_R);
+    if (i<0) i=0;
+    if (i>35) i=35;
+    d_theta_R = -(r->theta_R - r->D.P/10000.0) /
+        (1 - (map_P[i+1] - map_P[i]) / (PER_INDEX_R * 10000.0));
+    
+    i = (int)((r->theta_I - MIN_THETA_I) / PER_INDEX_I);
+    if (i<0) i=0;
+    if (i>35) i=35;
+    d_theta_I = -(r->theta_I - r->D.Q/10000.0) /
         (1 - (map_Q[i+1] - map_Q[i]) / (PER_INDEX_I * 10000.0));
  
-      printf("D TR-%4.2f, TI=%4.2f\n", d_theta_R,d_theta_I);
-      r->last.P = r->D.P;
-      r->last.Q = r->D.Q;
-      r->last_theta_R = r->theta_R;
-      r->last_theta_I = r->theta_I;
-      r->theta_R = r->theta_R + d_theta_R;
-      r->theta_I = r->theta_I + d_theta_I;
-    }
-  } /* while */
+    printf("D TR-%4.2f, TI=%4.2f\n", d_theta_R,d_theta_I);
+    
+    r->last.P = r->D.P;
+    r->last.Q = r->D.Q;
+    r->last_theta_R = r->theta_R;
+    r->last_theta_I = r->theta_I;
+    
+    r->theta_R = r->theta_R + d_theta_R;
+    r->theta_I = r->theta_I + d_theta_I;
+}
 
-  return 0;
+int power_pricing_problem_original()
+{
+    using namespace original;
+    Root r;
+    int finished=0;
+
+    r = build_tree();
+    
+    Compute_Tree(r);
+    
+    r->last.P = r->D.P;
+    r->last.Q = r->D.Q;
+    r->last_theta_R = r->theta_R;
+    r->last_theta_I = r->theta_I;
+    
+    r->theta_R = 0.7;
+    r->theta_I = 0.14;
+    while (!finished) {
+    
+        Compute_Tree(r); // recompute the tree 
+    
+        printf("TR=%4.2f, TI=%4.2f, P0=%4.2f, Q0=%4.2f\n",
+            r->theta_R,r->theta_I,r->D.P,r->D.Q);
+    
+        if (check_error(r)) {
+            finished = 1;
+        } else {
+            change_thetas(r);
+        }
+    } 
+    
+    return 0;
 }
