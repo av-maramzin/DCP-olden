@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
 
     level = dealwithargs(argc, argv);
 
+    cout << fixed;
+
     cout << "============================================================" << endl;
     cout << "= Olden perimeter benchmark feasibility study! =" << endl;
     cout << "============================================================" << endl;
@@ -75,7 +77,9 @@ int main(int argc, char *argv[])
     const int R = 2048; // R^2 = 4194304
 
     Grid grid(2*size/elementSize, elementSize); // computational grid 
-    
+    cout << "grid elements number: " << pow((int)2*size/elementSize,2) << endl;
+    cout << "grid elementSize: " << elementSize << endl;
+        
     Image* image = new RingImage(r, R); // image to map on the computational grid
    
     cout << "[4] Map ring image on the computational grid" << endl;
