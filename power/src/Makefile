@@ -2,7 +2,7 @@ TARGET = feasibility
 LIBS = -lm -lgomp
 CC = g++
 
-CFLAGS = -g -fopenmp -std=c++11 
+CFLAGS = -g -fopenmp -std=c++11 -Ioriginal -Istd -Iabstract 
 
 .PHONY: default all clean
 
