@@ -3,7 +3,7 @@
 /* node.c
  */
 
-#include "common/timing.h"
+//#include "common/timing.h"
 
 #ifndef TORONTO
 #include <cm/cmmd.h>
@@ -36,10 +36,10 @@ int main (int argc, char *argv[])
 {
     tree_t	*root;
     int level,result;
-    struct timespec total_start, total_stop;
-    struct timespec start, stop;
+//    struct timespec total_start, total_stop;
+//    struct timespec start, stop;
 
-    OLDEN_TIME(total_start);
+//    OLDEN_TIME(total_start);
 
 #ifdef FUTURES
     level = SPMDInit(argc,argv);
@@ -66,15 +66,15 @@ int main (int argc, char *argv[])
     CMMD_node_timer_start(0);
 #endif
 
-    OLDEN_TIME(start);
+//    OLDEN_TIME(start);
 #ifdef TORONTO
     root = TreeAlloc (level, 0, NumNodes);
 #else
     root = TreeAlloc (level, 0, __NumNodes);
 #endif
-    OLDEN_TIME(stop);
+//    OLDEN_TIME(stop);
 
-    chatting("olden: allocation time (in ms): %f\n", OLDEN_DURATION_MS(start, stop));
+//    chatting("olden: allocation time (in ms): %f\n", OLDEN_DURATION_MS(start, stop));
 
 #ifndef TORONTO
     CMMD_node_timer_stop(0);
@@ -87,16 +87,16 @@ int main (int argc, char *argv[])
 #ifndef TORONTO
     CMMD_node_timer_start(1);
 #endif
-    OLDEN_TIME(start);
+//    OLDEN_TIME(start);
     {
         int i;
         for (i = 0; i < runs; ++i) {
             result = TreeAdd (0, root);
         }
     }
-    OLDEN_TIME(stop);
+//    OLDEN_TIME(stop);
 
-    chatting("olden: process time (in ms): %f\n", OLDEN_DURATION_MS(start, stop));
+//    chatting("olden: process time (in ms): %f\n", OLDEN_DURATION_MS(start, stop));
 
 #ifndef TORONTO
     CMMD_node_timer_stop(1);
@@ -112,8 +112,8 @@ int main (int argc, char *argv[])
     __ShutDown();
 #endif
 
-    OLDEN_TIME(total_stop);
-    chatting("olden: total time (in ms): %f\n", OLDEN_DURATION_MS(total_start, total_stop));
+//    OLDEN_TIME(total_stop);
+//    chatting("olden: total time (in ms): %f\n", OLDEN_DURATION_MS(total_start, total_stop));
 
     exit(0);
 }
