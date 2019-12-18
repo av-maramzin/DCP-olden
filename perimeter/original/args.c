@@ -5,15 +5,13 @@
 #include <fcntl.h>
 #endif
 
-#ifdef TORONTO
- int NumNodes;
-#else
-extern int __NumNodes;
-#endif
-
-int runs;
-
 extern int atoi(const char *);
+
+#ifndef TORONTO
+extern int __NumNodes;
+#else
+int NumNodes;
+#endif
 
 #ifndef TORONTO
 void filestuff()
@@ -29,28 +27,23 @@ int dealwithargs(int argc, char *argv[])
 {
   int level;
 
-  if (argc > 3)
-    runs = atoi(argv[3]);
-  else
-    runs = 100;
-
-#ifdef TORONTO
-  if (argc > 2) 
-    NumNodes = atoi(argv[2]);
-  else 
-    NumNodes = 4;
-#else
-  if (argc > 2) 
+  if (argc > 2)
+#ifndef TORONTO
     __NumNodes = atoi(argv[2]);
-  else 
+  else
     __NumNodes = 4;
+#else
+    NumNodes = atoi(argv[2]);
+  else
+    NumNodes = 1;
 #endif
 
   if (argc > 1)
     level = atoi(argv[1]);
   else
-    level = 16;
+    level = 11;
 
   return level;
+
 }
 
