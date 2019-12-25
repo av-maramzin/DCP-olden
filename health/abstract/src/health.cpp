@@ -19,7 +19,7 @@ long long seed;
 // Element update logic forms a separate Fractal growth function
 
 //struct Village *alloc_tree(int level, int label, struct Village *back) {
-void growth_func(FractalElem_t* village, const FractalInfo_t& info) {
+void growth_func(FractalElement_t* village, const FractalElementInfo& info) {
 
     // [*] Remove recursive fractal construction logic
     //if (level == 0)
@@ -46,7 +46,7 @@ void growth_func(FractalElem_t* village, const FractalInfo_t& info) {
     //village->back = back;
     village->label = label;
     village->seed = label * (IQ + seed); 
-    village->hosp.personnel = (int)pow(2, level - 1);
+    village->hosp.personnel = (int)pow(2, depth - 1);
     village->hosp.free_personnel = village->hosp.personnel;
     village->hosp.num_waiting_patients = 0;
     village->hosp.assess.forward = NULL;
@@ -74,7 +74,7 @@ void growth_func(FractalElem_t* village, const FractalInfo_t& info) {
 }
 
 //struct Results get_results(struct Village *village) {
-struct Results get_results(struct Village *village, std::vector<struct Results>& child_rets) {
+FractalApply_get_results_ret_t get_results(FractalElement_t* village, const std::vector<FractalApply_get_results_ret_t>& child_rets) {
     
     //int                    i;
     struct List            *list;
@@ -90,6 +90,8 @@ struct Results get_results(struct Village *village, std::vector<struct Results>&
     // function cannot take NULL pointer as the element 
     //if (village == NULL) return r1;
 
+    // [*] Child fractal elements have already been processed 
+    // Their returned types are being passed inside the vector
     //for (i = 3; i > 0; i--) {
     //  struct Village *V = village->forward[i];
     //  fval[i] = get_results(V);
@@ -247,13 +249,14 @@ int main(int argc, char *argv[])
     dealwithargs(argc, argv);
 
     //struct Village* top = 0;
+    using FractalGrowthFunc_t = void (*)(FractalElement_t*,const FractalElementInfo&);
     unsigned int scaling_factor = 2;
-    Fractal<FractalElem_t,growth_func> fractal(scaling_factor);
+    Fractal<FractalElement_t,FractalGrowthFunc_t> fractal(growth_func, scaling_factor);
 
     //top = alloc_tree(max_level, 0, top);
     unsigned int fractal_levels = max_level;
     unsigned int fractal_seed_label = 0;
-    fractal.grow(fractal_levels, fractal_seed_label, nullptr);
+    fractal.grow(fractal_levels, fractal_seed_label);
 
     chatting("\n\n    Columbian Health Care Simulator\n\n");
     chatting("Working...\n");
@@ -261,12 +264,12 @@ int main(int argc, char *argv[])
     for (i = 0; i < max_time; i++) {
         if ((i % 50) == 0) chatting("%d\n", i);
         //sim(top);
-        fractal.apply<sim,struct List*>(sim);
+        fractal.template apply<FractalApply_sim_func_t,FractalApply_sim_ret_t>(sim);
     }                          /* :) adt_pf detected */
   
     printf("Getting Results\n");
     //results = get_results(top);              /* :) adt_pf detected */
-    results = fractal.apply<get_results,struct Results>(get_results);              /* :) adt_pf detected */
+    results = fractal.template apply<FractalApply_get_results_func_t,FractalApply_get_results_ret_t>(get_results);              /* :) adt_pf detected */
     
     total_patients = results.total_patients;
     total_time = results.total_time;
@@ -284,7 +287,7 @@ int main(int argc, char *argv[])
 }
 
 //struct List *sim(struct Village *village)
-struct List* sim(FractalElement_t* village, std::vector<struct List*>& child_fractal_rets)
+FractalApply_sim_ret_t sim(FractalElement_t* village, const std::vector<FractalApply_sim_ret_t>& child_fractal_rets)
 {
   int                    i;
   struct Patient         *patient;

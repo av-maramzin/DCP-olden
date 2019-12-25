@@ -7,8 +7,14 @@
 #ifndef _HEALTH
 #define _HEALTH
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+
+#include <vector>
+
+#include "Fractal.h"
+
+using namespace abstract;
 
 #define chatting printf
 
@@ -80,17 +86,18 @@ void dealwithargs(int argc, char *argv[]);
 
 //struct List* sim(struct Village *village);
 using FractalApply_sim_ret_t = struct List*;
-FractalApply_sim_ret_t 
-sim(FractalElem_t* village, 
-    std::vector<FractalApply_sim_ret_t>& child_rets);
+using FractalApply_sim_func_t = FractalApply_sim_ret_t (*)(FractalElement_t* village,
+                                                              const std::vector<FractalApply_sim_ret_t>& child_rets);
+FractalApply_sim_ret_t sim(FractalElement_t* village, const std::vector<FractalApply_sim_ret_t>& child_rets);
+
 
 //struct Results get_results(struct Village *village);
 using FractalApply_get_results_ret_t = struct Results;
-FractalApply_get_results_ret_t
-get_results(FractalElem_t* village,
-            std::vector<>& child_rets);
+using FractalApply_get_results_func_t = FractalApply_get_results_ret_t (*)(FractalElement_t* village,
+                                                                        const std::vector<FractalApply_get_results_ret_t>& child_rets);
+FractalApply_get_results_ret_t get_results(FractalElement_t* village, const std::vector<FractalApply_get_results_ret_t>& child_rets);
 
-// [*] Internal functions to be called form enclosing
+// [*] Internal functions to be called from enclosing
 // application functions
 
 float my_rand(long long idum);
