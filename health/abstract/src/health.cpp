@@ -21,6 +21,8 @@ long long seed;
 //struct Village *alloc_tree(int level, int label, struct Village *back) {
 void growth_func(FractalElement_t* village, const FractalElementInfo& info) {
 
+    info.check();
+
     // [*] Remove recursive fractal construction logic
     //if (level == 0)
     //  return NULL;
@@ -41,12 +43,12 @@ void growth_func(FractalElement_t* village, const FractalElementInfo& info) {
     // [*] Keep fractal element update functionality inside the growth function
 
     unsigned int label = info.label;
-    unsigned int depth = info.depth;
+    unsigned int level = info.level;
 
     //village->back = back;
     village->label = label;
     village->seed = label * (IQ + seed); 
-    village->hosp.personnel = (int)pow(2, depth - 1);
+    village->hosp.personnel = (int)pow(2, level - 1);
     village->hosp.free_personnel = village->hosp.personnel;
     village->hosp.num_waiting_patients = 0;
     village->hosp.assess.forward = NULL;
