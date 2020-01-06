@@ -42,9 +42,29 @@ QuadTree MakeTree(int size, int center_x, int center_y, int lo_proc,
   retval->parent = parent;
   retval->childtype = ct;
 
+  /*
+    char* ct_str = NULL;
+    switch (ct) {
+        case northwest:
+            ct_str = "northwest";
+            break;
+        case northeast:
+            ct_str = "northeast";
+            break;
+        case southwest:
+            ct_str = "southwest";
+            break;
+        case southeast:
+            ct_str = "southeast";
+            break;
+        default:
+            ct_str = "none";
+            break;
+    }*/
+
   intersect = CheckIntersect(center_x,center_y,size);
   size = size/2;
-  if ((intersect==0) && (size<512))
+  if ((intersect==0) && (size<1))
       {
       retval->color = white;
       retval->nw = NULL;
@@ -116,6 +136,14 @@ QuadTree MakeTree(int size, int center_x, int center_y, int lo_proc,
 	  retval->color = grey;
 	}
     }
+  /*
+    if (retval->color == white) {
+        printf("FractalElement(level=%d, size=%d, color=white, ct=%s\n",level,size,ct_str);
+    } else if (retval->color == black) {
+        printf("FractalElement(level=%d, size=%d, color=black, ct=%s\n",level,size,ct_str);
+    } else {
+        printf("FractalElement(level=%d, size=%d, color=grey, ct=%s\n",level,size,ct_str);
+    }*/
   return retval;
 }
 

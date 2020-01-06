@@ -210,7 +210,8 @@ int main(int argc, char *argv[])
   tree=MakeTree(2048,0,0,0,__NumNodes-1,NULL,southeast,level);
 #else
   chatting("Perimeter with %d levels on %d processors\n",level,NumNodes);
-  tree=MakeTree(2048*1024,0,0,0,NumNodes-1,NULL,southeast,level);
+  //tree=MakeTree(2048*1024,0,0,0,NumNodes-1,NULL,southeast,level);
+  tree=MakeTree(2048,0,0,0,NumNodes-1,NULL,southeast,level);
 #endif
 
 #ifdef DEBUG
@@ -228,9 +229,11 @@ int main(int argc, char *argv[])
 #endif
 
 #ifndef TORONTO
-  count=perimeter(tree,4096);
+  //count=perimeter(tree,4096);
+  count=perimeter(tree,2048);
 #else
-  count=perimeter(tree,4096);
+  //count=perimeter(tree,4096);
+  count=perimeter(tree,2048);
 #endif
 
 #ifndef TORONTO
