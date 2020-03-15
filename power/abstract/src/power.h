@@ -48,53 +48,99 @@ typedef struct demand {
 #define ROOT_EPSILON 0.00001
 
 typedef struct root {
-  Demand D;
-  double theta_R; 
-  double theta_I; 
-  Demand last;
-  double last_theta_R; 
-  double last_theta_I;
-  struct lateral *feeders[NUM_FEEDERS];
-} *Root;  /* sizeof(struct root) = 108 bytes */
+    Demand D;
+    double theta_R; 
+    double theta_I; 
+    Demand last;
+    double last_theta_R; 
+    double last_theta_I;
+    struct lateral* feeders[NUM_FEEDERS];
+} Root;  /* sizeof(struct root) = 108 bytes */
 
 typedef struct lateral {
-  Demand D;
-  double alpha;
-  double beta;
-  double R;
-  double X;
-  struct lateral *next_lateral;
-  struct branch *branch;
-} *Lateral; /* sizeof(struct lateral) = 64 bytes */
-using FractalElement_Lateral_t = struct lateral;
+    Demand D;
+    double alpha;
+    double beta;
+    double R;
+    double X;
+    struct lateral *next_lateral;
+    struct branch *branch;
+} Lateral; /* sizeof(struct lateral) = 64 bytes */
 
 typedef struct branch {
-  Demand D;
-  double alpha;
-  double beta;
-  double R;
-  double X;
-  struct branch *next_branch;
-  struct leaf *leaves[LEAVES_PER_BRANCH];
-} *Branch; /* sizeof(struct branch) = 92 bytes */
-using FractalElement_Branch_t = struct Branch;
+    Demand D;
+    double alpha;
+    double beta;
+    double R;
+    double X;
+    struct branch* next_branch;
+    struct leaf* leaves[LEAVES_PER_BRANCH];
+} Branch; /* sizeof(struct branch) = 92 bytes */
+
+using LateralFold = Fold<class Lateral,struct demand>;
+
+class Lateral : public LateralFold::Element {
+
+    public:
+        
+        Lateral();
+
+    private:
+        
+        Demand D;
+        double alpha;
+        double beta;
+        double R;
+        double X;
+        BranchFold branch_fold;
+} Lateral;
+
+using BranchFold = Fold<class Branch,struct demand>;
+
+class Branch : public BranchFold::Element {
+    
+    public:
+        
+        Branch();
+
+        BranchFold::Compute_t compute();
+       
+        struct seed {            
+            double theta_R;
+            double theta_I;
+            double pi_R;
+            double pi_I;
+        };
+        using Seed
+
+    
+    private:    
+        
+        Demand D;
+        double alpha;
+        double beta;
+        double R;
+        double X;
+        struct leaf* leaves[LEAVES_PER_BRANCH];
+};
+
 
 typedef struct leaf {
-  Demand D;
-  double pi_R;
-  double pi_I;
-} *Leaf;  /* sizeof(struct leaf) = 32 bytes */
+    Demand D;
+    double pi_R;
+    double pi_I;
+} Leaf;  /* sizeof(struct leaf) = 32 bytes */
 
 /* Prototypes */
-Root build_tree(void);
-Lateral build_lateral(int i, int num);
-Branch build_branch(int i, int j, int num);
-Leaf build_leaf();
+Root* build_tree(void);
+Lateral* build_lateral(int i, int num);
+Branch* build_branch(int i, int j, int num);
+Leaf* build_leaf();
 
-void Compute_Tree(Root r);
-Demand Compute_Lateral(Lateral l, double theta_R, double theta_I,
+void Compute_Tree(Root* r);
+Demand Compute_Lateral(Lateral* l, double theta_R, double theta_I,
                        double pi_R, double pi_I);
-Demand Compute_Branch(Branch b, double theta_R, double theta_I,
+Demand Compute_Branch(Branch* b, double theta_R, double theta_I,
                        double pi_R, double pi_I);
-Demand Compute_Leaf(Leaf l, double pi_R, double pi_I);
+Demand Compute_Leaf(Leaf* l, double pi_R, double pi_I);
 

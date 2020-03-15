@@ -32,26 +32,25 @@ double find_gradient_h (double* gradient);
 void find_dd_grad_f (double pi_R, double pi_I, double* dd_grad);
 double make_orthogonal (double* v_mod, double* v_static);
 
+void Compute_Tree(Root* r) {
+    int i;
+    Lateral* l;
+    Demand a;
+    Demand tmp;
+    double theta_R,theta_I;
 
-void Compute_Tree(Root r) {
-  int i;
-  Lateral l;
-  Demand a;
-  Demand tmp;
-  double theta_R,theta_I;
-
-  tmp.P = 0.0;
-  tmp.Q = 0.0;
-  for (i=0; i<NUM_FEEDERS; i++) {
-    l = r->feeders[i];
-    theta_R = r->theta_R;
-    theta_I = r->theta_I;
-    a = Compute_Lateral(l,theta_R,theta_I,theta_R,theta_I);
-    tmp.P += a.P;
-    tmp.Q += a.Q;
-  }
-  r->D.P = tmp.P;
-  r->D.Q = tmp.Q;
+    tmp.P = 0.0;
+    tmp.Q = 0.0;
+    for (i=0; i<NUM_FEEDERS; i++) {
+        l = r->feeders[i];
+        theta_R = r->theta_R;
+        theta_I = r->theta_I;
+        a = Compute_Lateral(l,theta_R,theta_I,theta_R,theta_I);
+        tmp.P += a.P;
+        tmp.Q += a.Q;
+    }
+    r->D.P = tmp.P;
+    r->D.Q = tmp.Q;
 }
 
 Demand Compute_Lateral(Lateral l, double theta_R, double theta_I, 
@@ -149,6 +148,73 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
 
   return br->D;
 }
+
+Branch::Seed_t Branch::compute_next_seed(Branch::Seed_t seed) {
+    
+    Branch::Seed_t next_seed;
+    
+    double new_pi_R, new_pi_I;
+    new_pi_R = seed.pi_R + alpha*(seed.theta_R + (seed.theta_I * X)/R);
+    new_pi_I = seed.pi_I + beta*(seed.theta_I + (seed.theta_R * R)/X);
+
+    next_seed.pi_R = new_pi_R;
+    next_seed.pi_I = new_pi_I;
+    next_seed.theta_R = seed.theta_R;
+    next_seed.theta_I = seed.theta_I;
+
+    return next_seed;
+}
+    
+
+
+BranchFold::Compute_t Branch::compute(BranchSeed seed) {
+  
+    Demand a2,tmp;
+    double new_pi_R, new_pi_I;
+    double a,b,c,root;
+    Leaf l;
+    Branch next;
+    int i;
+    Demand a1;
+  
+    /* Initialize tmp */
+    tmp.P = 0.0; 
+    tmp.Q = 0.0;
+
+    for (int i = 0; i < LEAVES_PER_BRANCH; i++) {
+        l = br->leaves[i];
+        a2 = Compute_Leaf(l, seed.pi_R, seed.pi_I);
+        tmp.P += a2.P;
+        tmp.Q += a2.Q;
+    }
+  
+    if (next != NULL) {
+    br->D.P = a1.P + tmp.P;
+    br->D.Q = a1.Q + tmp.Q;
+    } else {
+    br->D.P = tmp.P;
+    br->D.Q = tmp.Q;
+    }
+
+    /* compute P,Q */
+    a = br->R*br->R + br->X*br->X;  
+    b = 2*br->R*br->X*br->D.Q - 2*br->X*br->X*br->D.P - br->R;
+    c = br->R*br->D.Q - br->X*br->D.P;
+    c = c*c + br->R*br->D.P;
+    root = (-b-sqrt(b*b-4*a*c))/(2*a);
+    br->D.Q = br->D.Q + ((root-br->D.P)*br->X)/br->R;
+    br->D.P = root;
+    
+    /* compute alpha, beta */
+    a = 2*br->R*br->D.P;
+    b = 2*br->X*br->D.Q;
+    br->alpha = a/(1-a-b);
+    br->beta = b/(1-a-b);
+
+    return br->D;
+}
+
+
 
 Demand Compute_Leaf(Leaf l, double pi_R, double pi_I) {
   P = l->D.P;

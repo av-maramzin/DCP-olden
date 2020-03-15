@@ -1,6 +1,10 @@
 /* For copyright information, see olden_v1.0/COPYRIGHT */
 
 #include "tsp.h"
+
+#include <cstdlib>
+#include <cmath>
+
 #define NULL 0
 
 static Tree conquer(Tree t);
@@ -8,7 +12,7 @@ static Tree merge(Tree a, Tree b, Tree t, int nproc);
 static Tree makelist(Tree t);
 static void reverse(Tree t);
 static double distance(Tree a, Tree b);
-extern double sqrt(double a);
+//extern double sqrt(double a);
 
 /* Find Euclidean distance from a to b */
 static double distance(Tree a, Tree b) {
@@ -268,9 +272,26 @@ Tree tsp(Tree t,int sz,int nproc) {
 
   if (t->sz <= sz) return conquer(t);
 
-  left = t->left; right = t->right;
-  leftval = tsp(left,sz,nproc_2);
-  rightval = tsp(right,sz,nproc_2);
+  if (sz == 65535) {
+      left = t->left; right = t->right;
+      #pragma omp parallel sections
+      {
+        #pragma omp section
+        { 
+            leftval = tsp(left,sz/2,nproc_2);
+        }
+
+        #pragma omp section
+        { 
+            rightval = tsp(right,sz/2,nproc_2);
+        }
+      }
+  } else {
+      left = t->left; right = t->right;
+      leftval = tsp(left,sz/2,nproc_2);
+      rightval = tsp(right,sz/2,nproc_2);
+  }
+
   return merge(leftval,rightval,t,nproc);
 }
 

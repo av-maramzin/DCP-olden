@@ -1,3 +1,6 @@
+
+using namespace std;
+
 /* Toronto's hack */
 #define ALLOC(p, sz)      malloc(sz)
 #define chatting          printf  
@@ -5,7 +8,7 @@ extern int NumNodes, NDim;
 
 extern int flag;
 
-int atoi(const char *);
+//int atoi(const char *);
 int dealwithargs(int argc, char *argv[]);
   
 /* For copyright information, see olden_v1.0/COPYRIGHT */
