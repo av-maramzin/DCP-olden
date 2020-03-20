@@ -15,8 +15,8 @@
 void *malloc(unsigned Size);
 
 typedef struct demand {
-  double P;
-  double Q;
+    double P;
+    double Q;
 } Demand;
 
 #include <math.h>
@@ -77,13 +77,41 @@ typedef struct branch {
     struct leaf* leaves[LEAVES_PER_BRANCH];
 } Branch; /* sizeof(struct branch) = 92 bytes */
 
-using LateralFold = Fold<class Lateral,struct demand>;
+class Root {
+    
+    public:
 
+        Root();
+        ~Root();
+
+    private:
+        
+        Demand D;
+        double theta_R; 
+        double theta_I; 
+        Demand last;
+        double last_theta_R; 
+        double last_theta_I;
+        std::vector<LateralFold*> feeders; // [NUM_FEEDERS];
+};
+
+using LateralFold = Fold<class Lateral,struct demand,struct Lateral::Seed>;
 class Lateral : public LateralFold::Element {
 
     public:
         
         Lateral();
+        ~Lateral();
+
+        struct Seed {
+            double theta_R;
+            double theta_I;
+            double pi_R;
+            double pi_I;
+        };
+
+        LateralFold::Compute_t compute(LateralFold::Compute_t fold);
+        LateralFold::Seed_t inject(LateralFold::Seed_t seed);
 
     private:
         
@@ -95,26 +123,26 @@ class Lateral : public LateralFold::Element {
         BranchFold branch_fold;
 } Lateral;
 
-using BranchFold = Fold<class Branch,struct demand>;
-
+using BranchFold = Fold<class Branch,struct demand,struct Branch::Seed>;
 class Branch : public BranchFold::Element {
     
     public:
         
         Branch();
 
-        BranchFold::Compute_t compute();
-       
-        struct seed {            
+        struct Seed {            
             double theta_R;
             double theta_I;
             double pi_R;
             double pi_I;
         };
-        using Seed
-
+        
+        BranchFold::Seed_t inject(BranchFold::Seed_t seed);
+        BranchFold::Compute_t compute(BranchFold::Compute_t fold);
     
-    private:    
+    private: 
+
+        Seed seed;
         
         Demand D;
         double alpha;
@@ -124,12 +152,19 @@ class Branch : public BranchFold::Element {
         struct leaf* leaves[LEAVES_PER_BRANCH];
 };
 
+class Leaf {
 
-typedef struct leaf {
-    Demand D;
-    double pi_R;
-    double pi_I;
-} Leaf;  /* sizeof(struct leaf) = 32 bytes */
+    public:
+
+        Leaf();
+        ~Leaf() {}
+
+    private:
+        
+        Demand D;
+        double pi_R;
+        double pi_I;
+};
 
 /* Prototypes */
 Root* build_tree(void);

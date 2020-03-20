@@ -32,6 +32,110 @@ double find_gradient_h (double* gradient);
 void find_dd_grad_f (double pi_R, double pi_I, double* dd_grad);
 double make_orthogonal (double* v_mod, double* v_static);
 
+void Root::compute() {
+    LateralFold* l;
+    Demand a;
+    Demand tmp;
+
+    tmp.P = 0.0;
+    tmp.Q = 0.0;
+    for (int i=0; i<NUM_FEEDERS; i++) {
+        l = feeders[i];
+        
+        LateralFold::Seed seed;
+        seed.theta_R = this->theta_R; 
+        seed.theta_I = this->theta_I; 
+        seed.pi_R = this->theta_R; 
+        seed.pi_I = this>theta_I; 
+
+        l->inject(seed);
+        a = l->compute();
+        tmp.P += a.P;
+        tmp.Q += a.Q;
+    }
+    this->D.P = tmp.P;
+    this->D.Q = tmp.Q;
+}
+
+LateralFold::Compute_t Lateral::compute(LateralFold::Compute_t fold) {
+    
+    Demand a1;
+    Demand a2;
+  
+    a1 = fold;
+
+    branch_fold.inject(this->seed);
+    a2 = branch_fold.compute();
+
+    this->D.P = a1.P + a2.P;
+    this->D.Q = a1.Q + a2.Q;
+
+    double a, b, c, root;
+    
+    /* compute P,Q */
+    a = R*R + X*X;  
+    b = 2*R*X*D.Q - 2*X*X*D.P - R;
+    c = R*D.Q - X*D.P;
+    c = c*c + R*D.P;
+    root = (-b-sqrt(b*b-4*a*c))/(2*a);
+    
+    D.Q = D.Q + ((root-D.P)*X)/R;
+    D.P = root;
+
+    /* compute alpha, beta */
+    a = 2*l->R*l->D.P;
+    b = 2*l->X*l->D.Q;
+    
+    alpha = a/(1-a-b);
+    beta = b/(1-a-b);
+    
+    return D;
+}
+
+BranchFold::Compute_t Branch::compute(BranchFold::Compute_t fold) {
+    Demand a2,tmp;
+    double new_pi_R, new_pi_I;
+    double a,b,c,root;
+    Leaf l;
+    Branch next;
+    int i;
+    Demand a1;
+  
+    /* Initialize tmp */
+    tmp.P = 0.0;
+    tmp.Q = 0.0;
+    for (int i=0; i<LEAVES_PER_BRANCH; i++) {
+        l = leaves[i];
+        a2 = l->compute(seed.pi_R, seed.pi_I);
+        tmp.P += a2.P;
+        tmp.Q += a2.Q;
+    }
+    
+    D.P = fold.P + tmp.P;
+    D.Q = fold.Q + tmp.Q;
+
+    /* compute P,Q */
+    a = R*R + X*X;  
+    b = 2*R*X*D.Q - 2*X*X*D.P - R;
+    c = R*D.Q - X*D.P;
+    c = c*c + R*D.P;
+    root = (-b-sqrt(b*b-4*a*c))/(2*a);
+    
+    D.Q = D.Q + ((root-D.P)*X)/R;
+    D.P = root;
+    
+    /* compute alpha, beta */
+    a = 2*R*D.P;
+    b = 2*X*D.Q;
+    alpha = a/(1-a-b);
+    beta = b/(1-a-b);
+
+    return D;
+}
+
+
+
+
 void Compute_Tree(Root* r) {
     int i;
     Lateral* l;
@@ -52,6 +156,62 @@ void Compute_Tree(Root* r) {
     r->D.P = tmp.P;
     r->D.Q = tmp.Q;
 }
+
+Demand Lateral::inject(LateralFold::Seed_t s)
+{
+    double theta_R, theta_I, pi_R, pi_I;
+
+    LateralFold::Seed_t new_seed;
+    
+    Demand a1;
+    Demand a2;
+    double new_pi_R, new_pi_I;
+    double a,b,c,root;
+    Lateral next;
+    Branch br;
+  
+    double new_pi_R, new_pi_I;
+    new_pi_R = seed.pi_R + alpha*(seed.theta_R+(seed.theta_I*X)/R);
+    new_pi_I = seed.pi_I + beta*(seed.theta_I+(seed.theta_R*R)/X);
+
+
+    
+
+
+  next = l->next_lateral;
+  if (next != NULL) 
+    a1 = Compute_Lateral(next,theta_R,theta_I,new_pi_R,new_pi_I);
+
+  br = l->branch;
+  a2 = Compute_Branch(br,theta_R,theta_I,new_pi_R,new_pi_I);
+
+  if (next != NULL) {
+    l->D.P = a1.P + a2.P;
+    l->D.Q = a1.Q + a2.Q;
+  } else {
+    l->D.P = a2.P;
+    l->D.Q = a2.Q;
+  }
+
+  /* compute P,Q */
+  a = l->R*l->R + l->X*l->X;  
+  b = 2*l->R*l->X*l->D.Q - 2*l->X*l->X*l->D.P - l->R;
+  c = l->R*l->D.Q - l->X*l->D.P;
+  c = c*c + l->R*l->D.P;
+  root = (-b-sqrt(b*b-4*a*c))/(2*a);
+  l->D.Q = l->D.Q + ((root-l->D.P)*l->X)/l->R;
+  l->D.P = root;
+
+  /* compute alpha, beta */
+  a = 2*l->R*l->D.P;
+  b = 2*l->X*l->D.Q;
+  l->alpha = a/(1-a-b);
+  l->beta = b/(1-a-b);
+  return l->D;
+}
+
+
+
 
 Demand Compute_Lateral(Lateral l, double theta_R, double theta_I, 
                        double pi_R, double pi_I) {
@@ -214,21 +374,22 @@ BranchFold::Compute_t Branch::compute(BranchSeed seed) {
     return br->D;
 }
 
-
-
-Demand Compute_Leaf(Leaf l, double pi_R, double pi_I) {
-  P = l->D.P;
-  Q = l->D.Q;
+Demand Leaf::compute(double pi_R, double pi_I) {
+    
+    P = this->D.P;
+    Q = this->D.Q;
   
-  optimize_node(pi_R,pi_I);
+    optimize_node(pi_R, pi_I);
 
-  if (P<0.0) {
-    P = 0.0;
-    Q = 0.0;
-  }
-  l->D.P = P;
-  l->D.Q = Q;
-  return l->D;
+    if (P<0.0) {
+        P = 0.0;
+        Q = 0.0;
+    }
+    
+    this->D.P = P;
+    this->D.Q = Q;
+  
+    return this->D;
 }
 
 /*----------------------------------------------------------------------*/
