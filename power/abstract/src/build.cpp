@@ -12,44 +12,15 @@
 
 #include "power.h"
 
-Root* build_tree()
-{
-    int i;
-    Root* t;
-    Lateral* l;
-
-    t = (Root*) malloc(sizeof(*t));
-
-    for (i = 0; i < NUM_FEEDERS; i++) {
-        /* Insert future here, split into two loops */
-        l = build_lateral(i*LATERALS_PER_FEEDER, LATERALS_PER_FEEDER);
-        t->feeders[i]=l;
-    }
-    
-    t->theta_R = 0.8;
-    t->theta_I = 0.16;
-    
-    return t;
-}
-
 Root::Root()
+    : feeders(NUM_FEEDERS)
 {
-    int i;
-    Root* t;
-    Lateral* l;
-
-    t = (Root*) malloc(sizeof(*t));
-
-    for (i = 0; i < NUM_FEEDERS; i++) {
-        /* Insert future here, split into two loops */
-        l = build_lateral(i*LATERALS_PER_FEEDER, LATERALS_PER_FEEDER);
-        t->feeders[i]=l;
+    theta_R = 0.8;
+    theta_I = 0.16;
+   
+    for (int i = 0; i < NUM_FEEDERS; i++) {
+        feeders[i].grow(LATERALS_PER_FEEDER);
     }
-    
-    t->theta_R = 0.8;
-    t->theta_I = 0.16;
-    
-    return t;
 }
 
 Lateral::Lateral()
@@ -63,15 +34,12 @@ Lateral::Lateral()
 }
 
 Branch::Branch()
+    : leaves(LEAVES_PER_BRANCH)
 {
     R = 0.0001;
     X = 0.00002;
     alpha = 0.0;
     beta = 0.0;
-
-    for (i = 0; i < LEAVES_PER_BRANCH; i++) {
-        leaves[i] = new Leaf();
-    }
 }
 
 Leaf::Leaf() {
