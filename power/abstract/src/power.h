@@ -13,6 +13,7 @@
  */
 
 typedef struct demand {
+    demand() : P(0.0), Q(0.0) {}
     double P;
     double Q;
 } Demand;
@@ -39,6 +40,39 @@ typedef struct demand {
 #define ROOT_EPSILON 0.00001
 
 #include "Fold.h"
+
+using namespace abstract;
+
+class Lateral;
+struct Lateral::Seed;
+
+using LateralFold = Fold<class Lateral,struct demand,struct Lateral::Seed>;
+class Lateral : public LateralFold::Element {
+
+    public:
+        
+        Lateral();
+        ~Lateral();
+
+        struct Seed {
+            double theta_R;
+            double theta_I;
+            double pi_R;
+            double pi_I;
+        };
+
+        LateralFold::Compute_t compute(LateralFold::Compute_t fold);
+        LateralFold::Seed_t inject(LateralFold::Seed_t seed);
+
+    private:
+        
+        Demand D;
+        double alpha;
+        double beta;
+        double R;
+        double X;
+        BranchFold branch_fold;
+} Lateral;
 
 class Root {
     
@@ -130,11 +164,4 @@ class Leaf {
         double pi_R;
         double pi_I;
 };
-
-void Compute_Tree(Root* r);
-Demand Compute_Lateral(Lateral* l, double theta_R, double theta_I,
-                       double pi_R, double pi_I);
-Demand Compute_Branch(Branch* b, double theta_R, double theta_I,
-                       double pi_R, double pi_I);
-Demand Compute_Leaf(Leaf* l, double pi_R, double pi_I);
 
