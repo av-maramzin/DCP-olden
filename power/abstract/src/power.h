@@ -1,3 +1,6 @@
+#ifndef POWER_H
+#define POWER_H
+
 /* For copyright information, see olden_v1.0/COPYRIGHT */
 
 /*
@@ -12,11 +15,6 @@
  *
  */
 
-typedef struct demand {
-    demand() : P(0.0), Q(0.0) {}
-    double P;
-    double Q;
-} Demand;
 
 #include <math.h>
 
@@ -43,23 +41,87 @@ typedef struct demand {
 
 using namespace abstract;
 
-class Lateral;
-struct Lateral::Seed;
+typedef struct demand {
+    demand() : P(0.0), Q(0.0) {}
+    double P;
+    double Q;
+} Demand;
 
-using LateralFold = Fold<class Lateral,struct demand,struct Lateral::Seed>;
+class Leaf {
+
+    public:
+
+        Leaf();
+        ~Leaf() {}
+
+    private:
+        
+        Demand D;
+        double pi_R;
+        double pi_I;
+};
+
+// BranchFold - Fold of Laterals
+
+class Branch;
+struct BranchSeed {
+    double theta_R;
+    double theta_I;
+    double pi_R;
+    double pi_I;
+};
+
+using BranchFold_Element = class Branch;
+using BranchFold_Compute = struct demand;
+using BranchFold_Seed = struct BranchSeed;
+using BranchFold = Fold<BranchFold_Element,
+                        BranchFold_Compute,
+                        BranchFold_Seed>;
+
+class Branch : public BranchFold::Element {
+    
+    public:
+        
+        Branch();
+        ~Branch();
+        
+        BranchFold::Seed_t inject(BranchFold::Seed_t seed);
+        BranchFold::Compute_t compute(BranchFold::Compute_t fold);
+    
+    private:
+
+        Demand D;
+        double alpha;
+        double beta;
+        double R;
+        double X;
+        //struct leaf* leaves[LEAVES_PER_BRANCH];
+        std::vector<Leaf> leaves;
+};
+
+// LateralFold - Fold of Laterals
+
+class Lateral;
+struct LateralSeed {
+    double theta_R;
+    double theta_I;
+    double pi_R;
+    double pi_I;
+};
+
+using LateralFold_Element = class Lateral;
+using LateralFold_Compute = struct demand;
+using LateralFold_Seed = struct LateralSeed;
+using LateralFold = Fold<LateralFold_Element,
+                         LateralFold_Compute,
+                         LateralFold_Seed>;
+
 class Lateral : public LateralFold::Element {
 
     public:
         
         Lateral();
         ~Lateral();
-
-        struct Seed {
-            double theta_R;
-            double theta_I;
-            double pi_R;
-            double pi_I;
-        };
 
         LateralFold::Compute_t compute(LateralFold::Compute_t fold);
         LateralFold::Seed_t inject(LateralFold::Seed_t seed);
@@ -72,7 +134,7 @@ class Lateral : public LateralFold::Element {
         double R;
         double X;
         BranchFold branch_fold;
-} Lateral;
+};
 
 class Root {
     
@@ -92,76 +154,7 @@ class Root {
         double last_theta_R; 
         double last_theta_I;
         std::vector<LateralFold> feeders; // [NUM_FEEDERS];
+        Reduce<LateralFold> feeders; // [NUM_FEEDERS];
 };
 
-using LateralFold = Fold<class Lateral,struct demand,struct Lateral::Seed>;
-class Lateral : public LateralFold::Element {
-
-    public:
-        
-        Lateral();
-        ~Lateral();
-
-        struct Seed {
-            double theta_R;
-            double theta_I;
-            double pi_R;
-            double pi_I;
-        };
-
-        LateralFold::Compute_t compute(LateralFold::Compute_t fold);
-        LateralFold::Seed_t inject(LateralFold::Seed_t seed);
-
-    private:
-        
-        Demand D;
-        double alpha;
-        double beta;
-        double R;
-        double X;
-        BranchFold branch_fold;
-} Lateral;
-
-using BranchFold = Fold<class Branch,struct demand,struct Branch::Seed>;
-class Branch : public BranchFold::Element {
-    
-    public:
-        
-        Branch() : leaves(LEAVES_PER_BRANCH) {}
-        ~Branch();
-
-        struct Seed {            
-            double theta_R;
-            double theta_I;
-            double pi_R;
-            double pi_I;
-        };
-        
-        BranchFold::Seed_t inject(BranchFold::Seed_t seed);
-        BranchFold::Compute_t compute(BranchFold::Compute_t fold);
-    
-    private:
-
-        Demand D;
-        double alpha;
-        double beta;
-        double R;
-        double X;
-        //struct leaf* leaves[LEAVES_PER_BRANCH];
-        std::vector<Leaf> leaves;
-};
-
-class Leaf {
-
-    public:
-
-        Leaf();
-        ~Leaf() {}
-
-    private:
-        
-        Demand D;
-        double pi_R;
-        double pi_I;
-};
-
+#endif // #ifndef POWER_H

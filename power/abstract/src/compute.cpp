@@ -32,7 +32,7 @@ double find_gradient_h(double* gradient);
 void find_dd_grad_f(double pi_R, double pi_I, double* dd_grad);
 double make_orthogonal(double* v_mod, double* v_static);
 
-void Root::compute() {
+Demand Root::compute() {
     Demand a;
     Demand tmp;
 
@@ -46,7 +46,7 @@ void Root::compute() {
         seed.theta_R = this->theta_R; 
         seed.theta_I = this->theta_I; 
         seed.pi_R = this->theta_R; 
-        seed.pi_I = this>theta_I; 
+        seed.pi_I = this->theta_I; 
 
         l.inject(seed);
         
@@ -84,8 +84,8 @@ LateralFold::Compute_t Lateral::compute(LateralFold::Compute_t fold) {
     D.P = root;
 
     /* compute alpha, beta */
-    a = 2*l->R*l->D.P;
-    b = 2*l->X*l->D.Q;
+    a = 2*R*D.P;
+    b = 2*X*D.Q;
     
     alpha = a/(1-a-b);
     beta = b/(1-a-b);
@@ -135,8 +135,7 @@ BranchFold::Compute_t Branch::compute(BranchFold::Compute_t fold) {
     tmp.P = 0.0;
     tmp.Q = 0.0;
     for (int i=0; i<LEAVES_PER_BRANCH; i++) {
-        l = leaves[i];
-        a2 = l->compute(seed.pi_R, seed.pi_I);
+        a2 = leaves[i]->compute(seed.pi_R, seed.pi_I);
         tmp.P += a2.P;
         tmp.Q += a2.Q;
     }

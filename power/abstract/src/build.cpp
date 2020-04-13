@@ -23,6 +23,15 @@ Root::Root()
     }
 }
 
+Root::~Root() 
+{
+    for(int i=0; i<NUM_FEEDERS; i++) {
+        feeders[i].shrink(0);
+    }
+
+    feeders.clear();
+}
+
 Lateral::Lateral()
 {
     R = 1/300000.0;
@@ -31,6 +40,11 @@ Lateral::Lateral()
     beta = 0.0;
 
     branch_fold.grow(BRANCHES_PER_LATERAL);
+}
+
+Lateral::~Lateral()
+{
+    branch_fold.shrink(0);
 }
 
 Branch::Branch()
