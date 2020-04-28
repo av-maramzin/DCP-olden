@@ -14,83 +14,66 @@ int  max_level;
 long max_time;
 long long seed;
 
-struct Village *alloc_tree(int level, int label, struct Village *back) {
-  if (level == 0)
-    return NULL;
-  else {
-    struct Village       *new;
-    int                  i;
-    struct Village       *fval[4];
+void Village::grow(Fractal_t::Seed_t s) {
 
-    new = (struct Village *)malloc(sizeof(struct Village));
-
-    for (i = 3; i >= 0; i--)
-      fval[i] = alloc_tree(level - 1, label*4 + i + 1, new); 
-
-    new->back = back;
-    new->label = label;
-    new->seed = label * (IQ + seed); 
-    new->hosp.personnel = (int)pow(2, level - 1);
-    new->hosp.free_personnel = new->hosp.personnel;
-    new->hosp.num_waiting_patients = 0;
-    new->hosp.assess.forward = NULL;
-    new->hosp.assess.back = NULL;
-    new->hosp.assess.patient = NULL;  /* ADDED FOR LLVM [OLDEN BUGS!] */
-    new->hosp.waiting.forward = NULL;
-    new->hosp.waiting.back = NULL;
-    new->hosp.waiting.patient = NULL; /* ADDED FOR LLVM [OLDEN BUGS!] */
-    new->hosp.inside.forward = NULL;
-    new->hosp.inside.back = NULL;
-    new->hosp.inside.patient = NULL;  /* ADDED FOR LLVM [OLDEN BUGS!] */
-    new->hosp.up.forward = NULL;      /* ADDED FOR LLVM [OLDEN BUGS!] */
-    new->hosp.up.back = NULL;         /* ADDED FOR LLVM [OLDEN BUGS!] */
-    new->hosp.up.patient = NULL;      /* ADDED FOR LLVM [OLDEN BUGS!] */
-    new->returned.back = NULL;
-    new->returned.forward = NULL;
-
-    for (i = 0; i < 4; i++)
-      new->forward[i] = fval[i];
-
-    return new;
-  }
+    if (this->element_info().level == 0) {
+        return;
+    } else {
+        this->label = s;
+        this->seed = s * (IQ + seed); 
+        this->hosp.personnel = (int) pow(2, this->element_info().level-1);
+        this->hosp.free_personnel = this->hosp.personnel;
+        this->hosp.num_waiting_patients = 0;
+        this->hosp.assess.forward = NULL;
+        this->hosp.assess.back = NULL;
+        this->hosp.assess.patient = NULL;  /* ADDED FOR LLVM [OLDEN BUGS!] */
+        this->hosp.waiting.forward = NULL;
+        this->hosp.waiting.back = NULL;
+        this->hosp.waiting.patient = NULL; /* ADDED FOR LLVM [OLDEN BUGS!] */
+        this->hosp.inside.forward = NULL;
+        this->hosp.inside.back = NULL;
+        this->hosp.inside.patient = NULL;  /* ADDED FOR LLVM [OLDEN BUGS!] */
+        this->hosp.up.forward = NULL;      /* ADDED FOR LLVM [OLDEN BUGS!] */
+        this->hosp.up.back = NULL;         /* ADDED FOR LLVM [OLDEN BUGS!] */
+        this->hosp.up.patient = NULL;      /* ADDED FOR LLVM [OLDEN BUGS!] */
+        this->returned.back = NULL;
+        this->returned.forward = NULL;
+        
+        return;
+    }
 }
 
-struct Results get_results(struct Village *village) {
-  int                    i;
-  struct List            *list;
-  struct Patient         *p;
-  struct Results         fval[4];
-  struct Results         r1;
+GetResults::ComputeType GetResults::operator()(Fractal_t::Element* village, 
+                                               const std::vector<ComputeType>& child_rets) 
+{
+    struct Results r1;
+    
+    r1.total_hosps = 0.0;
+    r1.total_patients = 0.0;
+    r1.total_time = 0.0;
 
-  r1.total_hosps = 0.0;
-  r1.total_patients = 0.0;
-  r1.total_time = 0.0;
+    if (village == nullptr) return r1;
 
-  if (village == NULL) return r1;
+    for (auto& child_ret : child_rets) {
+        r1.total_hosps    += child_ret.total_hosps;
+        r1.total_patients += child_ret.total_patients;
+        r1.total_time     += child_ret.total_time;
+    }
 
-  for (i = 3; i > 0; i--) {
-    struct Village *V = village->forward[i];
-    fval[i] = get_results(V);
-  }
+    struct List* list;
+    list = village->returned.forward;
+    while (list != nullptr) {
+        
+        struct Patient* p = list->patient;
+        
+        r1.total_hosps += (float)(p->hosps_visited);
+        r1.total_time += (float)(p->time); 
+        r1.total_patients += 1.0;
+        
+        list = list->forward;
+    }
 
-  fval[0] = get_results(village->forward[0]);
-
-  for (i = 3; i >= 0; i--) {
-    r1.total_hosps    += fval[i].total_hosps;
-    r1.total_patients += fval[i].total_patients;
-    r1.total_time     += fval[i].total_time;
-  }
-
-  list = village->returned.forward;
-  while (list != NULL) {
-    p = list->patient;
-    r1.total_hosps += (float)(p->hosps_visited);
-    r1.total_time += (float)(p->time); 
-    r1.total_patients += 1.0;
-    list = list->forward;
-  }
-
-  return r1; 
+    return r1; 
 }
 
 void check_patients_inside(struct Village *village, struct List *list) 
@@ -174,7 +157,6 @@ void check_patients_waiting(struct Village *village, struct List *list) {
     list = list->forward; }         /* :) adt_pf detected */
 }
 
-
 void put_in_hosp(struct Hosp *hosp, struct Patient *patient) {
   int t = patient->hosps_visited;
 
@@ -216,83 +198,80 @@ struct Patient *generate_patient(struct Village *village)
 
 int main(int argc, char *argv[]) 
 { 
-  struct Results         results;
-  struct Village         *top = 0;
-  int                    i;
-  float total_time, total_patients, total_hosps;  
-  
-  dealwithargs(argc, argv);
-  top = alloc_tree(max_level, 0, top);
-  
-  chatting("\n\n    Columbian Health Care Simulator\n\n");
-  chatting("Working...\n");
-  
-  for (i = 0; i < max_time; i++) {
-    if ((i % 50) == 0) chatting("%d\n", i);
-    sim(top);
-  }                          /* :) adt_pf detected */
-  
-  printf("Getting Results\n");
-  results = get_results(top);              /* :) adt_pf detected */
-  total_patients = results.total_patients;
-  total_time = results.total_time;
-  total_hosps = results.total_hosps;
+    dealwithargs(argc, argv);
+ 
+    // create Fractal framework
+    Fractal_t fractal;
+    fractal.set_type(Fractal_t::Type::unbalanced);
+    fractal.set_impl_type(Fractal_t::Type::sequential);
 
-  chatting("Done.\n\n");
-  chatting("# of people treated:              %f people\n",
+    // grow the created framework
+    Fractal_t::Seed_t seed = 0;
+    fractal.grow(max_level, seed);
+
+    chatting("\n\n    Columbian Health Care Simulator\n\n");
+    chatting("Working...\n");
+  
+    Sim sim;
+    for (int i = 0; i < max_time; i++) {
+        if ((i % 50) == 0) chatting("%d\n", i);
+        fractal.template compute<Sim::ComputeType,Sim>(sim);
+    } /* :) adt_pf detected */
+
+    struct Results results;
+    float total_time, total_patients, total_hosps;  
+    
+    GetResults get_results;
+    
+    printf("Getting Results\n");
+    
+    results = fractal.template compute<GetResults::ComputeType,GetResults>(get_results);
+
+    total_patients = results.total_patients;
+    total_time = results.total_time;
+    total_hosps = results.total_hosps;
+
+    chatting("Done.\n\n");
+    chatting("# of people treated:              %f people\n",
 	   total_patients);
-  chatting("Average length of stay:           %0.2f time units\n", 
+    chatting("Average length of stay:           %0.2f time units\n", 
 	   total_time / total_patients);
-  chatting("Average # of hospitals visited:   %f hospitals\n\n",
+    chatting("Average # of hospitals visited:   %f hospitals\n\n",
 	   total_hosps / total_patients);
 
-  return 0;
+    return 0;
 }
 
-
-struct List *sim(struct Village *village)
+Sim::ComputeType Sim::operator()(Fractal_t::Element* village, const std::vector<Sim::ComputeType>& child_rets);
 {
-  int                    i;
-  struct Patient         *patient;
-  struct List            *l, *up;
-  struct Hosp            *h;
-  struct List            *val[4];
+    if (village == nullptr) return nullptr;
+   
+    // put all patients sent from child hospitals into the local one
+    struct Hosp* h = &village->hosp;
+    for (struct List* child_ret : child_rets) {
+        struct List* l = child_ret;
+        if (l != nullptr) {
+            l = l->forward;
+            while (l != nullptr) {
+	        put_in_hosp(h, l->patient);
+	        removeList(child_ret, l->patient);
+                l = l->forward;
+            }
+        }
+    } 
+
+    // do all modelling functionality
+    check_patients_inside(village, village->hosp.inside.forward);
+    struct List* up = check_patients_assess(village, village->hosp.assess.forward);
+    check_patients_waiting(village, village->hosp.waiting.forward);
   
-  int label;
-  if (village == NULL) return NULL;
- 
-  label = village->label;
-
-  for (i = 3; i > 0; i--) {
-    struct Village *V = village->forward[i];
-    struct List *L = sim(V);
-    val[i] = L;
-  }
-
-  val[0] = sim(village->forward[0]);
-  h = &village->hosp;
-
-  for (i = 3; i >= 0; i--) {
-    struct List *valI = l = val[i];
-    if (l != NULL) {
-      l = l->forward;
-      while (l != NULL) {
-	put_in_hosp(h, l->patient);
-	removeList(valI, l->patient);
-        l = l->forward;
-      }
+    // generate new patients
+    struct Patient* patient;
+    if ( (patient = generate_patient(village)) != nullptr) {  
+        put_in_hosp(&village->hosp, patient);
     }
-  }
 
-  check_patients_inside(village, village->hosp.inside.forward);
-  up = check_patients_assess(village, village->hosp.assess.forward);
-  check_patients_waiting(village, village->hosp.waiting.forward);
-  
-  /*** Generate new patients ***/  
-  if ((patient = generate_patient(village)) != NULL) {  
-    label = village->label;
-    put_in_hosp(&village->hosp, patient);
-  }
-
-  return up;
+    return up;
 }
+
+//

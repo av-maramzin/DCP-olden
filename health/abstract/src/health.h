@@ -4,7 +4,6 @@
  * health.h: header file for health.c                           *
  ****************************************************************/
 
-
 #ifndef _HEALTH
 #define _HEALTH
 
@@ -53,35 +52,54 @@ struct Hosp {
     struct List up;
 };
  
-struct Village {
-    struct Village         *forward[4];
-    struct Village         *back;
-    struct List returned;
-    struct Hosp hosp;   
-    int label;
-    long long seed;
+using Fractal_Element_t = class Village;
+using Fractal_Seed_t = int;
+const size_t Fractal_Arity = 4;
+using Fractal_t = Fractal<Fractal_Element_t,Fractal_Seed_t,Fractal_Arity>;
+
+class Village : public Fractal_t::Element {
+
+    public:
+        
+        Village(Fractal_t::ElementInfo info) : Fractal_t::Element(info) {}
+        ~Village();
+
+        void grow(Fractal_t::Seed_t seed) override;
+        Fractal_t::Seed_t spawn_child_seed(int child_id) override;
+
+    private:
+
+        struct List returned;
+        struct Hosp hosp;
+        int label;
+        long long seed;
 };
 
-class Village : public Fractal<Village,4> {
-
-
+class GetResults {
+    public:
+        using ComputeType = struct Results;
+        ComputeType operator(Fractal_t::Element* village, const std::vector<ComputeType>& child_rets);
 };
 
-struct Village *alloc_tree(int level, int label, struct Village *back);
-void dealwithargs(int argc, char *argv[]);
+class Sim {
+    public:
+        using ComputeType = struct List*;
+        ComputeType operator(Fractal_t::Element* village, const std::vector<ComputeType>& child_rets);
+};
+
+void dealwithargs(int argc, char* argv[]);
 float my_rand(long long idum);
 struct Patient *generate_patient(struct Village *village);
 void put_in_hosp(struct Hosp *hosp, struct Patient *patient);
 void addList(struct List *list, struct Patient *patient);
 void removeList(struct List *list, struct Patient *patient);
-struct List *sim(struct Village *village);
 void check_patients_inside(struct Village *village, struct List *list);
 struct List *check_patients_assess(struct Village *village, struct List *list);
 void check_patients_waiting(struct Village *village, struct List *list);
 float get_num_people(struct Village *village);
 float get_total_time(struct Village *village);
 float get_total_hosps(struct Village *village);
-struct Results get_results(struct Village *village);
 
 #endif
 
+//
