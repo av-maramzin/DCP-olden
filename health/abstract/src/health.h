@@ -19,6 +19,8 @@
 #define IR 2836
 #define MASK 123459876
 
+#include "Fractal_dynamic.h"
+
 extern int max_level;
 extern long max_time;
 extern long long seed;
