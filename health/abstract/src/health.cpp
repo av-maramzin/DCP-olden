@@ -43,7 +43,11 @@ void Village::grow(Fractal_t::Seed_t s) {
     }
 }
 
-GetResults::ComputeType GetResults::operator()(Fractal_t::Element* village, 
+Fractal_t::Seed_t Village::spawn_child_seed(int child_id) {
+    return (4*this->label+child_id+1);
+}
+
+GetResults::ComputeType GetResults::operator()(Village* village, 
                                                const std::vector<ComputeType>& child_rets) 
 {
     struct Results r1;
@@ -200,10 +204,10 @@ int main(int argc, char *argv[])
 { 
     dealwithargs(argc, argv);
  
-    // create Fractal framework
+    // create Fractal framework and set its type
     Fractal_t fractal;
     fractal.set_type(Fractal_t::Type::unbalanced);
-    fractal.set_impl_type(Fractal_t::Type::sequential);
+    fractal.set_impl_type(Fractal_t::ImplType::sequential);
 
     // grow the created framework
     Fractal_t::Seed_t seed = 0;
@@ -216,7 +220,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < max_time; i++) {
         if ((i % 50) == 0) chatting("%d\n", i);
         fractal.template compute<Sim::ComputeType,Sim>(sim);
-    } /* :) adt_pf detected */
+    } 
 
     struct Results results;
     float total_time, total_patients, total_hosps;  
@@ -242,7 +246,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-Sim::ComputeType Sim::operator()(Fractal_t::Element* village, const std::vector<Sim::ComputeType>& child_rets);
+Sim::ComputeType Sim::operator()(Village* village, const std::vector<Sim::ComputeType>& child_rets)
 {
     if (village == nullptr) return nullptr;
    

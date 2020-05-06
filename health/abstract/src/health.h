@@ -21,6 +21,8 @@
 
 #include "Fractal_dynamic.h"
 
+using namespace abstract;
+
 extern int max_level;
 extern long max_time;
 extern long long seed;
@@ -64,12 +66,10 @@ class Village : public Fractal_t::Element {
     public:
         
         Village(Fractal_t::ElementInfo info) : Fractal_t::Element(info) {}
-        ~Village();
+        ~Village() {}
 
         void grow(Fractal_t::Seed_t seed) override;
         Fractal_t::Seed_t spawn_child_seed(int child_id) override;
-
-    private:
 
         struct List returned;
         struct Hosp hosp;
@@ -80,19 +80,19 @@ class Village : public Fractal_t::Element {
 class GetResults {
     public:
         using ComputeType = struct Results;
-        ComputeType operator(Fractal_t::Element* village, const std::vector<ComputeType>& child_rets);
+        ComputeType operator()(Village* village, const std::vector<ComputeType>& child_rets);
 };
 
 class Sim {
     public:
         using ComputeType = struct List*;
-        ComputeType operator(Fractal_t::Element* village, const std::vector<ComputeType>& child_rets);
+        ComputeType operator()(Village* village, const std::vector<ComputeType>& child_rets);
 };
 
 void dealwithargs(int argc, char* argv[]);
 float my_rand(long long idum);
-struct Patient *generate_patient(struct Village *village);
-void put_in_hosp(struct Hosp *hosp, struct Patient *patient);
+struct Patient* generate_patient(struct Village* village);
+void put_in_hosp(struct Hosp* hosp, struct Patient* patient);
 void addList(struct List *list, struct Patient *patient);
 void removeList(struct List *list, struct Patient *patient);
 void check_patients_inside(struct Village *village, struct List *list);
