@@ -47,8 +47,8 @@ Fractal_t::Seed_t Village::spawn_child_seed(int child_id) {
     return (4*this->label+child_id+1);
 }
 
-GetResults::ComputeType GetResults::operator()(Village* village, 
-                                               const std::vector<ComputeType>& child_rets) 
+GetResults::Compute_t GetResults::operator()(Village& village, 
+                                             const std::vector<Compute_t>& child_rets) 
 {
     struct Results r1;
     
@@ -56,7 +56,7 @@ GetResults::ComputeType GetResults::operator()(Village* village,
     r1.total_patients = 0.0;
     r1.total_time = 0.0;
 
-    if (village == nullptr) return r1;
+    //if (village == nullptr) return r1;
 
     for (auto& child_ret : child_rets) {
         r1.total_hosps    += child_ret.total_hosps;
@@ -65,7 +65,7 @@ GetResults::ComputeType GetResults::operator()(Village* village,
     }
 
     struct List* list;
-    list = village->returned.forward;
+    list = village.returned.forward;
     while (list != nullptr) {
         
         struct Patient* p = list->patient;
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
     // create Fractal framework and set its type
     Fractal_t fractal;
     fractal.set_type(Fractal_t::Type::unbalanced);
-    fractal.set_impl_type(Fractal_t::ImplType::sequential);
+    fractal.set_impl_type(Fractal_t::ImplType::parallel);
 
     // grow the created framework
     Fractal_t::Seed_t seed = 0;
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
     Sim sim;
     for (int i = 0; i < max_time; i++) {
         if ((i % 50) == 0) chatting("%d\n", i);
-        fractal.template compute<Sim::ComputeType,Sim>(sim);
+        fractal.template compute<Sim::Compute_t>(sim);
     } 
 
     struct Results results;
@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
     
     printf("Getting Results\n");
     
-    results = fractal.template compute<GetResults::ComputeType,GetResults>(get_results);
+    results = fractal.template compute<GetResults::Compute_t>(get_results);
 
     total_patients = results.total_patients;
     total_time = results.total_time;
@@ -246,12 +246,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-Sim::ComputeType Sim::operator()(Village* village, const std::vector<Sim::ComputeType>& child_rets)
+Sim::Compute_t Sim::operator()(Village& village, const std::vector<Sim::Compute_t>& child_rets)
 {
-    if (village == nullptr) return nullptr;
+    //if (village == nullptr) return nullptr;
    
     // put all patients sent from child hospitals into the local one
-    struct Hosp* h = &village->hosp;
+    struct Hosp* h = &village.hosp;
     for (struct List* child_ret : child_rets) {
         struct List* l = child_ret;
         if (l != nullptr) {
@@ -265,14 +265,14 @@ Sim::ComputeType Sim::operator()(Village* village, const std::vector<Sim::Comput
     } 
 
     // do all modelling functionality
-    check_patients_inside(village, village->hosp.inside.forward);
-    struct List* up = check_patients_assess(village, village->hosp.assess.forward);
-    check_patients_waiting(village, village->hosp.waiting.forward);
+    check_patients_inside(&village, village.hosp.inside.forward);
+    struct List* up = check_patients_assess(&village, village.hosp.assess.forward);
+    check_patients_waiting(&village, village.hosp.waiting.forward);
   
     // generate new patients
     struct Patient* patient;
-    if ( (patient = generate_patient(village)) != nullptr) {  
-        put_in_hosp(&village->hosp, patient);
+    if ( (patient = generate_patient(&village)) != nullptr) {  
+        put_in_hosp(&(village.hosp), patient);
     }
 
     return up;

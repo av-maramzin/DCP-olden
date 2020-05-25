@@ -77,16 +77,16 @@ class Village : public Fractal_t::Element {
         long long seed;
 };
 
-class GetResults {
+using GetResults_Compute_t = struct Results;
+class GetResults : public Fractal_t::ComputeFunction<GetResults_Compute_t> {
     public:
-        using ComputeType = struct Results;
-        ComputeType operator()(Village* village, const std::vector<ComputeType>& child_rets);
+        Compute_t operator()(Village& village, const std::vector<Compute_t>& child_rets);
 };
 
-class Sim {
+using Sim_Compute_t = struct List*;
+class Sim : public Fractal_t::ComputeFunction<Sim_Compute_t> {
     public:
-        using ComputeType = struct List*;
-        ComputeType operator()(Village* village, const std::vector<ComputeType>& child_rets);
+        Compute_t operator()(Village& village, const std::vector<Compute_t>& child_rets);
 };
 
 void dealwithargs(int argc, char* argv[]);
