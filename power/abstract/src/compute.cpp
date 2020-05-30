@@ -19,7 +19,6 @@
 static double P=1.0;
 static double Q=1.0;
 
-
 /*----------------------------------------------------------------------*/
 /* Leaf optimization procedures                 */
 
@@ -32,44 +31,84 @@ double find_gradient_h(double* gradient);
 void find_dd_grad_f(double pi_R, double pi_I, double* dd_grad);
 double make_orthogonal(double* v_mod, double* v_static);
 
+// Root compute
+
 Demand Root::compute() {
+    // final compute value
     Demand a;
-    Demand tmp;
-
-    tmp.P = 0.0;
-    tmp.Q = 0.0;
-    for (int i = 0; i < NUM_FEEDERS; i++) {
-        LateralFold& l = feeders[i];
-        
-        // prepare a seed and do injection
-        LateralFold::Seed_t seed;
-        seed.theta_R = this->theta_R; 
-        seed.theta_I = this->theta_I; 
-        seed.pi_R = this->theta_R; 
-        seed.pi_I = this->theta_I; 
-
-        l.inject(seed);
-        
-        a = l.compute();
-        tmp.P += a.P;
-        tmp.Q += a.Q;
-    }
-    this->D.P = tmp.P;
-    this->D.Q = tmp.Q;
+    // prepare a seed and do an injection
+    Reduce_Feeder::Inject_t inject_data;
+    inject_data.theta_R = this->theta_R; 
+    inject_data.theta_I = this->theta_I; 
+    inject_data.pi_R = this->theta_R; 
+    inject_data.pi_I = this->theta_I; 
+    // prepare a seed and do an injection
+    feeders.inject(inject_data);
+    // create a compute function object and call the API 
+    Feeder_ComputeFunc compute_func;
+    a = feeders.template<Demand> compute(compute_func);
+    // update the Root
+    this->D.P = a.P;
+    this->D.Q = a.Q;
+    // return computed result
+    return a;
 }
 
-LateralFold::Compute_t Lateral::compute(LateralFold::Compute_t fold) {
+// Feeder compute
+
+Feeder_ComputeFunc::Compute_t 
+Feeder_ComputeFunc::operator()(Reduce_Feeder::Element_t& feeder) {
+    Lateral_ComputeFunc compute_func;
+    return feeder.fold_lateral.template<Feeder_ComputeFunc::Compute_t>(compute_func);
+}
+
+Feeder_ComputeFunc::Compute_t 
+Feeder_ComputeFunc::operator()(const std::vector<Feeder_ComputeFunc::Compute_t>& rets) {
+    Demand tmp;
+    tmp.P = 0.0;
+    tmp.Q = 0.0;
+    for (auto ret : rets) {
+        tmp.P += ret.P;
+        tmp.Q += ret.Q;
+    }
+    return tmp;
+}
+
+// Lateral compute
+
+using Fold_Lateral_ComputeType = struct demand;
+class Lateral_ComputeFunc : public Fold_Lateral::ComputeFunction<Fold_Lateral_ComputeType> {
     
+    public:
+
+        Fold_Lateral_ComputeType operator()(Fold_Lateral::Element_t& element, 
+                                            Fold_Lateral_ComputeType cumulative) override;
+};
+
+Lateral_ComputeFunc::Compute_t operator()(Fold_Lateral::Element_t& element, 
+                                          Lateral_ComputeFunc::Compute_t cumulative)
+{
+    // copy data from the element
+    Demand& D = element.D;
+    double alpha = element.alpha;
+    double beta = element.beta;
+    double R = element.R;
+    double X = element.X;
+    Fold_Branch& branch_fold = element.fold_branch;
+
     Demand a1;
     Demand a2;
   
-    a1 = fold;
+    a1 = cumulative;
 
-    branch_fold.inject(this->extract_seed());
-    a2 = branch_fold.compute();
+    Fold_Lateral::Inject_t inject_data = element.get_injected_data();
+    fold_branch.inject(inject_data);
+    
+    Branch_ComputeFunc compute_func;
+    a2 = fold_branch.compute(compute_func);
 
-    this->D.P = a1.P + a2.P;
-    this->D.Q = a1.Q + a2.Q;
+    D.P = a1.P + a2.P;
+    D.Q = a1.Q + a2.Q;
 
     double a, b, c, root;
     
@@ -87,63 +126,70 @@ LateralFold::Compute_t Lateral::compute(LateralFold::Compute_t fold) {
     a = 2*R*D.P;
     b = 2*X*D.Q;
     
-    alpha = a/(1-a-b);
-    beta = b/(1-a-b);
+    element.alpha = a/(1-a-b);
+    element.beta = b/(1-a-b);
     
     return D;
 }
 
-LateralFold::Seed_t Lateral::inject(LateralFold::Seed_t seed)
+Fold_Lateral::Inject_t Lateral::inject(Fold_Lateral::Inject_t injected_data)
 {
     double theta_R;
     double theta_I;
     double pi_R;
     double pi_I;
 
-    theta_R = seed.theta_R;
-    theta_I = seed.theta_I;
-    pi_R = seed.pi_R;
-    pi_I = seed.pi_I;
+    theta_R = injected_data.theta_R;
+    theta_I = injected_data.theta_I;
+    pi_R = injected_data.pi_R;
+    pi_I = injected_data.pi_I;
 
     // recompute new pi values
     double new_pi_R, new_pi_I;
-    new_pi_R = pi_R + l->alpha*(theta_R+(theta_I*l->X)/l->R);
-    new_pi_I = pi_I + l->beta*(theta_I+(theta_R*l->R)/l->X);
+    new_pi_R = pi_R + alpha*(theta_R+(theta_I*X)/R);
+    new_pi_I = pi_I + beta*(theta_I+(theta_R*R)/X);
 
     // plant current seed to be later used in computations
-    LateralFold::Seed_t current_elem_seed;
-    current_elem_seed.theta_R = seed.theta_R;
-    current_elem_seed.theta_I = seed.theta_I;
+    Fold_Lateral::Inject_t current_elem_seed;
+    current_elem_seed.theta_R = injected_data.theta_R;
+    current_elem_seed.theta_I = injected_data.theta_I;
     current_elem_seed.pi_R = new_pi_R;
     current_elem_seed.pi_I = new_pi_I;
-    this->plant_seed(current_elem_seed);
+    this->plant_injected_data(current_elem_seed);
    
     // pass the new seed to the next fold element
     return current_elem_seed;
 }
 
-BranchFold::Compute_t Branch::compute(BranchFold::Compute_t fold) {
-    Demand a2,tmp;
-    double new_pi_R, new_pi_I;
-    double a,b,c,root;
-    Leaf l;
-    Branch next;
-    int i;
-    Demand a1;
-  
-    /* Initialize tmp */
-    tmp.P = 0.0;
-    tmp.Q = 0.0;
-    for (int i=0; i<LEAVES_PER_BRANCH; i++) {
-        a2 = leaves[i]->compute(seed.pi_R, seed.pi_I);
-        tmp.P += a2.P;
-        tmp.Q += a2.Q;
-    }
+// Branch compute
+
+Branch_ComputeFunc::Compute_t operator()(Fold_Branch::Element_t& element, 
+                                         Branch_ComputeFunc::Compute_t cumulative)
+{
+    // copy data from the element
+    Demand& D = element.D;
+    double alpha = element.alpha;
+    double beta = element.beta;
+    double R = element.R;
+    double X = element.X;
+
+    // reduce all leaves
+    Fold_Branch::Inject_t fold_inject_data = element.get_injected_data();
+    Reduce_Leaf::Inject_t leaf_inject_data;
+    leaf_inject_data.pi_R = fold_inject_data.pi_R;
+    leaf_inject_data.pi_I = fold_inject_data.pi_I;
+
+    leaves.inject(leaf_inject_data);
+   
+    Leaf_ComputeFunc compute_func; 
+    tmp = leaves.template<Branch_ComputeFunc::Compute_t> compute(compute_func);
     
-    D.P = fold.P + tmp.P;
-    D.Q = fold.Q + tmp.Q;
+    D.P = cumulative.P + tmp.P;
+    D.Q = cumulative.Q + tmp.Q;
 
     /* compute P,Q */
+    double a, b, c, root;
+    
     a = R*R + X*X;  
     b = 2*R*X*D.Q - 2*X*X*D.P - R;
     c = R*D.Q - X*D.P;
@@ -156,23 +202,24 @@ BranchFold::Compute_t Branch::compute(BranchFold::Compute_t fold) {
     /* compute alpha, beta */
     a = 2*R*D.P;
     b = 2*X*D.Q;
-    alpha = a/(1-a-b);
-    beta = b/(1-a-b);
+    
+    element.alpha = a/(1-a-b);
+    element.beta = b/(1-a-b);
 
     return D;
 }
 
-BranchFold::Seed_t Branch::inject(BranchFold::Seed_t seed)
+Fold_Branch::Inject_t Branch::inject(Fold_Branch::Inject_t injected_data)
 {
     double theta_R;
     double theta_I;
     double pi_R;
     double pi_I;
 
-    theta_R = seed.theta_R;
-    theta_I = seed.theta_I;
-    pi_R = seed.pi_R;
-    pi_I = seed.pi_I;
+    theta_R = injected_data.theta_R;
+    theta_I = injected_data.theta_I;
+    pi_R = injected_data.pi_R;
+    pi_I = injected_data.pi_I;
 
     // recompute new pi values
     double new_pi_R, new_pi_I;
@@ -180,9 +227,9 @@ BranchFold::Seed_t Branch::inject(BranchFold::Seed_t seed)
     new_pi_I = pi_I + this->beta*(theta_I+(theta_R*this->R)/this->X);
 
     // plant current seed to be later used in computations
-    BranchFold::Seed_t current_elem_seed;
-    current_elem_seed.theta_R = seed.theta_R;
-    current_elem_seed.theta_I = seed.theta_I;
+    Fold_Branch::Inject_t current_elem_seed;
+    current_elem_seed.theta_R = injected_data.theta_R;
+    current_elem_seed.theta_I = injected_data.theta_I;
     current_elem_seed.pi_R = new_pi_R;
     current_elem_seed.pi_I = new_pi_I;
     this->plant_seed(current_elem_seed);
@@ -191,22 +238,36 @@ BranchFold::Seed_t Branch::inject(BranchFold::Seed_t seed)
     return current_elem_seed;
 }
 
-Demand Leaf::compute(double pi_R, double pi_I) {
+Leaf_ComputeFunc::Compute_t operator()(const std::vector<Leaf_ComputeFunc::Compute_t>& rets)
+{
+    Demand tmp;
+    tmp.P = 0.0;
+    tmp.Q = 0.0;
     
-    P = this->D.P;
-    Q = this->D.Q;
-  
-    optimize_node(pi_R, pi_I);
+    for (auto ret : rets) {
+        tmp.P += ret.P;
+        tmp.Q += ret.Q;
+    }
+}
 
-    if (P<0.0) {
+Leaf_ComputeFunc::Compute_t operator()(Reduce_Leaf::Element_t& element)
+{
+    P = element.D.P;
+    Q = element.D.Q;
+ 
+    Reduce_Leaf::Inject_t injected_data = element.get_injected_data();
+
+    optimize_node(injected_data.pi_R, injected_data.pi_I);
+
+    if (P < 0.0) {
         P = 0.0;
         Q = 0.0;
     }
     
-    this->D.P = P;
-    this->D.Q = Q;
+    element.D.P = P;
+    element.D.Q = Q;
   
-    return this->D;
+    return element.D;
 }
 
 /*----------------------------------------------------------------------*/
@@ -350,7 +411,7 @@ void find_dd_grad_f (double pi_R, double pi_I, double* dd_grad)
     dd_grad[1]=-Q_plus_1_inv*Q_plus_1_inv*Q_grad_term/grad_mag;
 }
 
-double make_orthogonal (double* v_mod, double* v_static)
+double make_orthogonal(double* v_mod, double* v_static)
 {
     int		    i;
     double	    total=0.0;
