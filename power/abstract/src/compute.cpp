@@ -36,17 +36,17 @@ double make_orthogonal(double* v_mod, double* v_static);
 Demand Root::compute() {
     // final compute value
     Demand a;
-    // prepare a seed and do an injection
+    // prepare an injection
     Reduce_Feeder::Inject_t inject_data;
     inject_data.theta_R = this->theta_R; 
     inject_data.theta_I = this->theta_I; 
     inject_data.pi_R = this->theta_R; 
     inject_data.pi_I = this->theta_I; 
-    // prepare a seed and do an injection
+    // do an injection into the reduction
     feeders.inject(inject_data);
     // create a compute function object and call the API 
     Feeder_ComputeFunc compute_func;
-    a = feeders.template<Demand> compute(compute_func);
+    a = feeders.template compute<Demand>(compute_func);
     // update the Root
     this->D.P = a.P;
     this->D.Q = a.Q;
@@ -59,11 +59,11 @@ Demand Root::compute() {
 Feeder_ComputeFunc::Compute_t 
 Feeder_ComputeFunc::operator()(Reduce_Feeder::Element_t& feeder) {
     Lateral_ComputeFunc compute_func;
-    return feeder.fold_lateral.template<Feeder_ComputeFunc::Compute_t>(compute_func);
+    return feeder.fold_lateral.template compute<Feeder_ComputeFunc::Compute_t>(compute_func);
 }
 
 Feeder_ComputeFunc::Compute_t 
-Feeder_ComputeFunc::operator()(const std::vector<Feeder_ComputeFunc::Compute_t>& rets) {
+Feeder_ComputeFunc::operator()(std::vector<Feeder_ComputeFunc::Compute_t>& rets) {
     Demand tmp;
     tmp.P = 0.0;
     tmp.Q = 0.0;
@@ -76,16 +76,7 @@ Feeder_ComputeFunc::operator()(const std::vector<Feeder_ComputeFunc::Compute_t>&
 
 // Lateral compute
 
-using Fold_Lateral_ComputeType = struct demand;
-class Lateral_ComputeFunc : public Fold_Lateral::ComputeFunction<Fold_Lateral_ComputeType> {
-    
-    public:
-
-        Fold_Lateral_ComputeType operator()(Fold_Lateral::Element_t& element, 
-                                            Fold_Lateral_ComputeType cumulative) override;
-};
-
-Lateral_ComputeFunc::Compute_t operator()(Fold_Lateral::Element_t& element, 
+Lateral_ComputeFunc::Compute_t Lateral_ComputeFunc::operator()(Fold_Lateral::Element_t& element, 
                                           Lateral_ComputeFunc::Compute_t cumulative)
 {
     // copy data from the element
@@ -99,13 +90,16 @@ Lateral_ComputeFunc::Compute_t operator()(Fold_Lateral::Element_t& element,
     Demand a1;
     Demand a2;
   
-    a1 = cumulative;
+    a1 = (struct demand) cumulative;
 
     Fold_Lateral::Inject_t inject_data = element.get_injected_data();
-    fold_branch.inject(inject_data);
+    Fold_Branch::Inject_t injection;
+    injection.pi_I = inject_data.pi_I;
+    injection.pi_R = inject_data.pi_R;
+    element.fold_branch.inject(injection);
     
     Branch_ComputeFunc compute_func;
-    a2 = fold_branch.compute(compute_func);
+    a2 = element.fold_branch.template compute<Demand>(compute_func);
 
     D.P = a1.P + a2.P;
     D.Q = a1.Q + a2.Q;
@@ -132,7 +126,7 @@ Lateral_ComputeFunc::Compute_t operator()(Fold_Lateral::Element_t& element,
     return D;
 }
 
-Fold_Lateral::Inject_t Lateral::inject(Fold_Lateral::Inject_t injected_data)
+Fold_Lateral::Inject_t Lateral::inject(const Fold_Lateral::Inject_t injected_data)
 {
     double theta_R;
     double theta_I;
@@ -163,7 +157,7 @@ Fold_Lateral::Inject_t Lateral::inject(Fold_Lateral::Inject_t injected_data)
 
 // Branch compute
 
-Branch_ComputeFunc::Compute_t operator()(Fold_Branch::Element_t& element, 
+Branch_ComputeFunc::Compute_t Branch_ComputeFunc::operator()(Fold_Branch::Element_t& element, 
                                          Branch_ComputeFunc::Compute_t cumulative)
 {
     // copy data from the element
@@ -179,10 +173,11 @@ Branch_ComputeFunc::Compute_t operator()(Fold_Branch::Element_t& element,
     leaf_inject_data.pi_R = fold_inject_data.pi_R;
     leaf_inject_data.pi_I = fold_inject_data.pi_I;
 
-    leaves.inject(leaf_inject_data);
+    element.leaves.inject(leaf_inject_data);
    
     Leaf_ComputeFunc compute_func; 
-    tmp = leaves.template<Branch_ComputeFunc::Compute_t> compute(compute_func);
+    Demand tmp;
+    tmp = element.leaves.template compute<Leaf_ComputeFunc::Compute_t>(compute_func);
     
     D.P = cumulative.P + tmp.P;
     D.Q = cumulative.Q + tmp.Q;
@@ -232,25 +227,13 @@ Fold_Branch::Inject_t Branch::inject(Fold_Branch::Inject_t injected_data)
     current_elem_seed.theta_I = injected_data.theta_I;
     current_elem_seed.pi_R = new_pi_R;
     current_elem_seed.pi_I = new_pi_I;
-    this->plant_seed(current_elem_seed);
+    this->plant_injected_data(current_elem_seed);
    
     // pass the new seed to the next fold element
     return current_elem_seed;
 }
 
-Leaf_ComputeFunc::Compute_t operator()(const std::vector<Leaf_ComputeFunc::Compute_t>& rets)
-{
-    Demand tmp;
-    tmp.P = 0.0;
-    tmp.Q = 0.0;
-    
-    for (auto ret : rets) {
-        tmp.P += ret.P;
-        tmp.Q += ret.Q;
-    }
-}
-
-Leaf_ComputeFunc::Compute_t operator()(Reduce_Leaf::Element_t& element)
+Leaf_ComputeFunc::Compute_t Leaf_ComputeFunc::operator()(Reduce_Leaf::Element_t& element)
 {
     P = element.D.P;
     Q = element.D.Q;
@@ -268,6 +251,20 @@ Leaf_ComputeFunc::Compute_t operator()(Reduce_Leaf::Element_t& element)
     element.D.Q = Q;
   
     return element.D;
+}
+
+Leaf_ComputeFunc::Compute_t Leaf_ComputeFunc::operator()(std::vector<Leaf_ComputeFunc::Compute_t>& rets)
+{
+    Demand tmp;
+    tmp.P = 0.0;
+    tmp.Q = 0.0;
+    
+    for (auto ret : rets) {
+        tmp.P += ret.P;
+        tmp.Q += ret.Q;
+    }
+
+    return tmp;
 }
 
 /*----------------------------------------------------------------------*/

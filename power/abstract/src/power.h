@@ -37,6 +37,7 @@
 #define ROOT_EPSILON 0.00001
 
 #include "Fold.h"
+#include "Reduce.h"
 
 using namespace abstract;
 
@@ -44,23 +45,19 @@ typedef struct demand {
     
     demand() : P(0.0), Q(0.0) {}
 
+    struct demand& operator+=(const struct demand& ref) {
+        this->P += ref.P;
+        this->Q += ref.Q;
+    }
+
+    struct demand& operator=(const struct demand ref) {
+        this->P = ref.P;
+        this->Q = ref.Q;
+    }
+
     double P;
     double Q;
 } Demand;
-
-class Leaf {
-
-    public:
-
-        Leaf();
-        ~Leaf() {}
-
-    private:
-        
-        Demand D;
-        double pi_R;
-        double pi_I;
-};
 
 // Reduce_Leaf - Reduce of Leaves
 
@@ -83,12 +80,8 @@ class Leaf : public Reduce_Leaf::Element {
         Leaf(Reduce_Leaf::ElementInfo& info);
         ~Leaf() override;
         
-        void grow(Reduce_Leaf::Seed_t seed) override;
-        
-        Reduce_Leaf::Inject_t inject(Reduce_Leaf::Inject_t data) override;
+        void grow() override;
 
-    private:
-        
         Demand D;
         double pi_R;
         double pi_I;
@@ -99,14 +92,14 @@ class Leaf_ComputeFunc : public Reduce_Leaf::ComputeFunction<Reduce_Leaf_Compute
     
     public:
 
-        Reduce_Feeder_ComputeType operator()(Reduce_Leaf::Element_t&) override;
-        Reduce_Feeder_ComputeType operator()(const std::vector<Reduce_Leaf_ComputeType>&) override;
+        Reduce_Leaf_ComputeType operator()(Reduce_Leaf::Element_t&) override;
+        Reduce_Leaf_ComputeType operator()(std::vector<Reduce_Leaf_ComputeType>&) override;
 };
 
-// Fold_Branch - Foldf of Branches
+// Fold_Branch - Fold of Branches
 
-using Fold_Branch_Element = class Branch;
-using Fold_Branch_Seed = int;
+using Fold_Branch_ElementType = class Branch;
+using Fold_Branch_SeedType = int;
 struct Fold_Branch_InjectType_struct {
     double theta_R;
     double theta_I;
@@ -122,14 +115,11 @@ class Branch : public Fold_Branch::Element {
     
     public:
         
-        Branch();
+        Branch(Fold_Branch::ElementInfo&);
         ~Branch();
         
-        void grow(Fold_Branch::Seed_t seed) override;
-        Fold_Branch::Inject_t inject(Fold_Branch::Inject_t injected_data) override;
-        Fold_Branch::Seed_t spawn_child_seed() override; 
-
-    private:
+        void grow() override;
+        Fold_Branch::Inject_t inject(const Fold_Branch::Inject_t injected_data) override;
 
         Demand D;
         double alpha;
@@ -173,18 +163,15 @@ class Lateral : public Fold_Lateral::Element {
         Lateral(Fold_Lateral::ElementInfo& info);
         ~Lateral() override;
 
-        void grow(Fold_Lateral::Seed_t seed) override;
-        Fold_Lateral::Inject_t inject(Fold_Lateral::Inject_t injected_data) override;
-        Fold_Lateral::Seed_t spawn_child_seed() override; 
+        void grow() override;
+        Fold_Lateral::Inject_t inject(const Fold_Lateral::Inject_t injected_data) override;
 
-    private:
-        
         Demand D;
         double alpha;
         double beta;
         double R;
         double X;
-        Fold_Branch branch_fold;
+        Fold_Branch fold_branch;
 };
 
 using Fold_Lateral_ComputeType = struct demand;
@@ -201,8 +188,16 @@ class Lateral_ComputeFunc : public Fold_Lateral::ComputeFunction<Fold_Lateral_Co
 class Feeder;
 using Reduce_Feeder_ElementType = class Feeder;
 using Reduce_Feeder_SeedType = int;
+struct Reduce_Feeder_InjectType_struct {
+    double theta_R;
+    double theta_I;
+    double pi_R;
+    double pi_I;
+};
+using Reduce_Feeder_InjectType = Reduce_Feeder_InjectType_struct;
 using Reduce_Feeder = Reduce<Reduce_Feeder_ElementType,
-                             Reduce_Feeder_SeedType>;
+                             Reduce_Feeder_SeedType,
+                             Reduce_Feeder_InjectType>;
 
 class Feeder : public Reduce_Feeder::Element {
 
@@ -211,9 +206,7 @@ class Feeder : public Reduce_Feeder::Element {
         Feeder(Reduce_Feeder::ElementInfo& info);
         ~Feeder() override;
 
-        void grow(Reduce_Feeder::Seed_t seed) override;
-
-    private:
+        void grow() override;
         
         Fold_Lateral fold_lateral;
 };
@@ -224,9 +217,8 @@ class Feeder_ComputeFunc : public Reduce_Feeder::ComputeFunction<Reduce_Feeder_C
     public:
 
         Reduce_Feeder_ComputeType operator()(Reduce_Feeder::Element_t&) override;
-        Reduce_Feeder_ComputeType operator()(const std::vector<Reduce_Feeder_ComputeType>&) override;
+        Reduce_Feeder_ComputeType operator()(std::vector<Reduce_Feeder_ComputeType>&) override;
 };
-
 
 class Root {
     
@@ -237,16 +229,12 @@ class Root {
 
         Demand compute();
 
-    private:
-        
         Demand D;
         double theta_R; 
         double theta_I; 
         Demand last;
         double last_theta_R; 
         double last_theta_I;
-        //std::vector<Fold_Lateral> feeders; // [NUM_FEEDERS];
-        //Reduce<LateralFold> feeders; // [NUM_FEEDERS];
         Reduce_Feeder feeders; // [NUM_FEEDERS];
 };
 

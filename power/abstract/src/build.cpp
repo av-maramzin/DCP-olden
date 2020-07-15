@@ -20,35 +20,33 @@ Root::Root()
     theta_I = 0.16;
    
     size_t reduce_width = NUM_FEEDERS;
-    int reduce_seed = 0;
     
-    feeders.grow(reduce_width, reduce_seed);
+    feeders.grow(reduce_width);
 }
 
-Root::~Root() 
-{
-    feeders.clear();
-}
+Root::~Root() {} 
 
 // Reduce_Feeder
 
 Feeder::Feeder(Reduce_Feeder::ElementInfo& info)
-    Reduce_Feeder::Element(info) {}
+    : Reduce_Feeder::Element(info) {}
 
-Feeder::grow(Reduce_Feeder::Seed_t seed)
+Feeder::~Feeder() {}
+
+void Feeder::grow()
 {
     size_t fold_depth = LATERALS_PER_FEEDER;
-    fold_lateral.grow(fold_depth, seed);
+    fold_lateral.grow(fold_depth);
 }
 
 // Fold_Lateral
 
 Lateral::Lateral(Fold_Lateral::ElementInfo& info)
-    Fold_Lateral::Element(info) {}
+    : Fold_Lateral::Element(info) {}
 
 Lateral::~Lateral() {}
 
-Lateral::grow(Fold_Lateral::Seed_t seed)
+void Lateral::grow()
 {
     R = 1/300000.0;
     X = 0.000001;
@@ -56,7 +54,7 @@ Lateral::grow(Fold_Lateral::Seed_t seed)
     beta = 0.0;
 
     size_t fold_depth = BRANCHES_PER_LATERAL;
-    fold_branch.grow(fold_depth, seed);
+    fold_branch.grow(fold_depth);
 }
 
 // Fold_Branch
@@ -66,7 +64,7 @@ Branch::Branch(Fold_Branch::ElementInfo& info)
 
 Branch::~Branch() {}
 
-Branch::grow(Fold_Branch::Seed_t seed)
+void Branch::grow()
 {
     R = 0.0001;
     X = 0.00002;
@@ -74,13 +72,15 @@ Branch::grow(Fold_Branch::Seed_t seed)
     beta = 0.0;
 
     size_t reduce_width = BRANCHES_PER_LATERAL;
-    leaves.grow(reduce_width, seed);
+    leaves.grow(reduce_width);
 }
 
 Leaf::Leaf(Reduce_Leaf::ElementInfo& info)
     : Reduce_Leaf::Element(info) {}
 
-Leaf::grow() {
+Leaf::~Leaf() {}
+
+void Leaf::grow() {
     D.P = 1.0;
     D.Q = 1.0;
 }
