@@ -42,6 +42,10 @@ Demand Root::compute() {
     inject_data.theta_I = this->theta_I; 
     inject_data.pi_R = this->theta_R; 
     inject_data.pi_I = this->theta_I; 
+    
+    //printf("INJECT Root: theta_R=%4.2f, theta_I=%4.2f\n, pi_R=%4.2f, pi_I=%4.2f\n", 
+    //        this->theta_R, this->theta_I, this->theta_R, this->theta_I);
+    
     // do an injection into the reduction
     feeders.inject(inject_data);
     // create a compute function object and call the API 
@@ -50,16 +54,34 @@ Demand Root::compute() {
     // update the Root
     this->D.P = a.P;
     this->D.Q = a.Q;
+    //printf("COMPUTE Root: D.P=%4.2f, D.Q=%4.2f\n", 
+    //        a.P, a.Q);
     // return computed result
     return a;
 }
 
 // Feeder compute
 
+void Feeder::inject(const Reduce_Feeder::Inject_t data) {
+    
+    Fold_Lateral::Inject_t inject_data;
+    inject_data.theta_R = data.theta_R; 
+    inject_data.theta_I = data.theta_I; 
+    inject_data.pi_R = data.pi_R; 
+    inject_data.pi_I = data.pi_I; 
+
+    //printf("INJECT Feeder: theta_R=%4.2f, theta_I=%4.2f\n, pi_R=%4.2f, pi_I=%4.2f\n", 
+    //        data.theta_R, data.theta_I, data.pi_R, data.pi_I);
+
+    fold_lateral.inject(inject_data);
+}
+
 Feeder_ComputeFunc::Compute_t 
 Feeder_ComputeFunc::operator()(Reduce_Feeder::Element_t& feeder) {
     Lateral_ComputeFunc compute_func;
-    return feeder.fold_lateral.template compute<Feeder_ComputeFunc::Compute_t>(compute_func);
+    Demand D = feeder.fold_lateral.template compute<Feeder_ComputeFunc::Compute_t>(compute_func);
+    //printf("COMPUTE Lateral Fold [%d] = {P=%4.2f, Q=%4.2f}\n", feeder.element_info().index, D.P, D.Q); 
+    return D;
 }
 
 Feeder_ComputeFunc::Compute_t 
@@ -89,15 +111,17 @@ Lateral_ComputeFunc::Compute_t Lateral_ComputeFunc::operator()(Fold_Lateral::Ele
 
     Demand a1;
     Demand a2;
-  
-    a1 = (struct demand) cumulative;
-
+ 
     Fold_Lateral::Inject_t inject_data = element.get_injected_data();
     Fold_Branch::Inject_t injection;
+    injection.theta_R = inject_data.theta_R;
+    injection.theta_I = inject_data.theta_I;
     injection.pi_I = inject_data.pi_I;
     injection.pi_R = inject_data.pi_R;
     element.fold_branch.inject(injection);
-    
+ 
+    a1 = (struct demand) cumulative;
+   
     Branch_ComputeFunc compute_func;
     a2 = element.fold_branch.template compute<Demand>(compute_func);
 
@@ -122,6 +146,8 @@ Lateral_ComputeFunc::Compute_t Lateral_ComputeFunc::operator()(Fold_Lateral::Ele
     
     element.alpha = a/(1-a-b);
     element.beta = b/(1-a-b);
+  
+    //printf("COMPUTE Lateral [%d] = {P=%4.2f, Q=%4.2f}\n", element.element_info().index, D.P, D.Q); 
     
     return D;
 }
@@ -150,6 +176,9 @@ Fold_Lateral::Inject_t Lateral::inject(const Fold_Lateral::Inject_t injected_dat
     current_elem_seed.pi_R = new_pi_R;
     current_elem_seed.pi_I = new_pi_I;
     this->plant_injected_data(current_elem_seed);
+ 
+    //printf("INJECT Lateral: theta_R=%4.2f, theta_I=%4.2f\n, pi_R=%4.2f, pi_I=%4.2f\n", 
+    //        current_elem_seed.theta_R, current_elem_seed.theta_I, current_elem_seed.pi_R, current_elem_seed.pi_I);
    
     // pass the new seed to the next fold element
     return current_elem_seed;
@@ -172,12 +201,14 @@ Branch_ComputeFunc::Compute_t Branch_ComputeFunc::operator()(Fold_Branch::Elemen
     Reduce_Leaf::Inject_t leaf_inject_data;
     leaf_inject_data.pi_R = fold_inject_data.pi_R;
     leaf_inject_data.pi_I = fold_inject_data.pi_I;
-
+    
     element.leaves.inject(leaf_inject_data);
    
     Leaf_ComputeFunc compute_func; 
     Demand tmp;
     tmp = element.leaves.template compute<Leaf_ComputeFunc::Compute_t>(compute_func);
+    
+    //printf("COMPUTE Leaves [%d] = {P=%4.2f, Q=%4.2f}\n", element.element_info().index, tmp.P, tmp.Q); 
     
     D.P = cumulative.P + tmp.P;
     D.Q = cumulative.Q + tmp.Q;
@@ -193,13 +224,15 @@ Branch_ComputeFunc::Compute_t Branch_ComputeFunc::operator()(Fold_Branch::Elemen
     
     D.Q = D.Q + ((root-D.P)*X)/R;
     D.P = root;
-    
+   
     /* compute alpha, beta */
     a = 2*R*D.P;
     b = 2*X*D.Q;
     
     element.alpha = a/(1-a-b);
     element.beta = b/(1-a-b);
+
+    //printf("COMPUTE Branch [%d] = {P=%4.2f, Q=%4.2f}\n", element.element_info().index, D.P, D.Q); 
 
     return D;
 }
@@ -228,7 +261,10 @@ Fold_Branch::Inject_t Branch::inject(Fold_Branch::Inject_t injected_data)
     current_elem_seed.pi_R = new_pi_R;
     current_elem_seed.pi_I = new_pi_I;
     this->plant_injected_data(current_elem_seed);
-   
+ 
+    //printf("INJECT Branch: theta_R=%4.2f, theta_I=%4.2f\n, pi_R=%4.2f, pi_I=%4.2f\n", 
+    //        current_elem_seed.theta_R, current_elem_seed.theta_I, current_elem_seed.pi_R, current_elem_seed.pi_I);
+  
     // pass the new seed to the next fold element
     return current_elem_seed;
 }
@@ -240,6 +276,9 @@ Leaf_ComputeFunc::Compute_t Leaf_ComputeFunc::operator()(Reduce_Leaf::Element_t&
  
     Reduce_Leaf::Inject_t injected_data = element.get_injected_data();
 
+    //printf("INJECT Leaf: pi_R=%4.2f, pi_I=%4.2f\n", 
+    //        injected_data.pi_R, injected_data.pi_I);
+
     optimize_node(injected_data.pi_R, injected_data.pi_I);
 
     if (P < 0.0) {
@@ -249,7 +288,9 @@ Leaf_ComputeFunc::Compute_t Leaf_ComputeFunc::operator()(Reduce_Leaf::Element_t&
     
     element.D.P = P;
     element.D.Q = Q;
-  
+
+    //printf("COMPUTE Leaf [%d] = {P=%4.2f, Q=%4.2f}\n", element.element_info().index, element.D.P, element.D.Q); 
+
     return element.D;
 }
 

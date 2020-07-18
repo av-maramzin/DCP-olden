@@ -46,12 +46,19 @@ void Compute_Tree(Root r) {
     l = r->feeders[i];
     theta_R = r->theta_R;
     theta_I = r->theta_I;
+    
+    //printf("INJECT Root: theta_R=%4.2f, theta_I=%4.2f\n, pi_R=%4.2f, pi_I=%4.2f\n", 
+    //        theta_R, theta_I, theta_R, theta_I);
+    
     a = Compute_Lateral(l,theta_R,theta_I,theta_R,theta_I);
+    //printf("Lateral Fold [%d] = {P=%4.2f, Q=%4.2f}\n", i, a.P, a.Q); 
     tmp.P += a.P;
     tmp.Q += a.Q;
   }
   r->D.P = tmp.P;
   r->D.Q = tmp.Q;
+  //printf("COMPUTE Root: D.P=%4.2f, D.Q=%4.2f\n", 
+  //          tmp.P, tmp.Q);
 }
 
 Demand Compute_Lateral(Lateral l, double theta_R, double theta_I, 
@@ -62,9 +69,12 @@ Demand Compute_Lateral(Lateral l, double theta_R, double theta_I,
   double a,b,c,root;
   Lateral next;
   Branch br;
-  
+
   new_pi_R = pi_R + l->alpha*(theta_R+(theta_I*l->X)/l->R);
   new_pi_I = pi_I + l->beta*(theta_I+(theta_R*l->R)/l->X);
+
+  //printf("INJECT Lateral: theta_R=%4.2f, theta_I=%4.2f\n, pi_R=%4.2f, pi_I=%4.2f\n", 
+  //       theta_R, theta_I, new_pi_R, new_pi_I);
 
   next = l->next_lateral;
   if (next != NULL) 
@@ -95,6 +105,9 @@ Demand Compute_Lateral(Lateral l, double theta_R, double theta_I,
   b = 2*l->X*l->D.Q;
   l->alpha = a/(1-a-b);
   l->beta = b/(1-a-b);
+    
+  //printf("COMPUTE Lateral = {P=%4.2f, Q=%4.2f}\n", l->D.P, l->D.Q); 
+  
   return l->D;
 }
 
@@ -107,9 +120,12 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
   Branch next;
   int i;
   Demand a1;
-  
+
   new_pi_R = pi_R + br->alpha*(theta_R+(theta_I*br->X)/br->R);
   new_pi_I = pi_I + br->beta*(theta_I+(theta_R*br->R)/br->X);
+
+  //printf("INJECT Branch: theta_R=%4.2f, theta_I=%4.2f\n, pi_R=%4.2f, pi_I=%4.2f\n", 
+  //       theta_R, theta_I, new_pi_R, new_pi_I);
 
   next = br->next_branch;
   if (next != NULL)  {
@@ -125,6 +141,8 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
     tmp.P += a2.P;
     tmp.Q += a2.Q;
   }
+  //printf("COMPUTE Leaves = {P=%4.2f, Q=%4.2f}\n", tmp.P, tmp.Q); 
+  
   if (next != NULL) {
     br->D.P = a1.P + tmp.P;
     br->D.Q = a1.Q + tmp.Q;
@@ -141,11 +159,14 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
   root = (-b-sqrt(b*b-4*a*c))/(2*a);
   br->D.Q = br->D.Q + ((root-br->D.P)*br->X)/br->R;
   br->D.P = root;
+
   /* compute alpha, beta */
   a = 2*br->R*br->D.P;
   b = 2*br->X*br->D.Q;
   br->alpha = a/(1-a-b);
   br->beta = b/(1-a-b);
+  
+  //printf("COMPUTE Branch = {P=%4.2f, Q=%4.2f}\n", br->D.P, br->D.Q); 
 
   return br->D;
 }
@@ -153,7 +174,10 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
 Demand Compute_Leaf(Leaf l, double pi_R, double pi_I) {
   P = l->D.P;
   Q = l->D.Q;
-  
+
+  //printf("INJECT Leaf: pi_R=%4.2f, pi_I=%4.2f\n", 
+  //       pi_R, pi_I);
+
   optimize_node(pi_R,pi_I);
 
   if (P<0.0) {
@@ -162,6 +186,9 @@ Demand Compute_Leaf(Leaf l, double pi_R, double pi_I) {
   }
   l->D.P = P;
   l->D.Q = Q;
+    
+  //printf("COMPUTE Leaf = {P=%4.2f, Q=%4.2f}\n", l->D.P, l->D.Q); 
+  
   return l->D;
 }
 

@@ -16,6 +16,7 @@
  */
 
 #include <math.h>
+#include <stdio.h>
 
 #define NULL 0
 
@@ -67,6 +68,11 @@ using Reduce_Leaf_SeedType = int;
 struct Reduce_Leaf_InjectType_struct {
     double pi_R;
     double pi_I;
+
+    struct Reduce_Leaf_InjectType_struct& operator=(struct Reduce_Leaf_InjectType_struct ref) {
+        pi_R = ref.pi_R;
+        pi_I = ref.pi_I;
+    }
 };
 using Reduce_Leaf_InjectType = struct Reduce_Leaf_InjectType_struct;
 using Reduce_Leaf = Reduce<Reduce_Leaf_ElementType,
@@ -105,6 +111,13 @@ struct Fold_Branch_InjectType_struct {
     double theta_I;
     double pi_R;
     double pi_I;
+    
+    struct Fold_Branch_InjectType_struct& operator=(struct Fold_Branch_InjectType_struct ref) {
+        theta_R = ref.theta_R;
+        theta_I = ref.theta_I;
+        pi_R = ref.pi_R;
+        pi_I = ref.pi_I;
+    }
 };
 using Fold_Branch_InjectType = struct Fold_Branch_InjectType_struct;
 using Fold_Branch = Fold<Fold_Branch_ElementType,
@@ -150,6 +163,13 @@ struct Fold_Lateral_InjectType_struct {
     double theta_I;
     double pi_R;
     double pi_I;
+
+    struct Fold_Lateral_InjectType_struct& operator()(struct Fold_Lateral_InjectType_struct ref) {
+        theta_R = ref.theta_R;
+        theta_I = ref.theta_I;
+        pi_R = ref.pi_R;
+        pi_I = ref.pi_I;
+    }
 };
 using Fold_Lateral_InjectType = struct Fold_Lateral_InjectType_struct;
 using Fold_Lateral = Fold<Fold_Lateral_ElementType,
@@ -193,6 +213,13 @@ struct Reduce_Feeder_InjectType_struct {
     double theta_I;
     double pi_R;
     double pi_I;
+    
+    struct Reduce_Feeder_InjectType_struct& operator()(struct Reduce_Feeder_InjectType_struct ref) {
+        theta_R = ref.theta_R;
+        theta_I = ref.theta_I;
+        pi_R = ref.pi_R;
+        pi_I = ref.pi_I;
+    }
 };
 using Reduce_Feeder_InjectType = Reduce_Feeder_InjectType_struct;
 using Reduce_Feeder = Reduce<Reduce_Feeder_ElementType,
@@ -207,7 +234,8 @@ class Feeder : public Reduce_Feeder::Element {
         ~Feeder() override;
 
         void grow() override;
-        
+        void inject(const Reduce_Feeder::Inject_t data) override;
+
         Fold_Lateral fold_lateral;
 };
 

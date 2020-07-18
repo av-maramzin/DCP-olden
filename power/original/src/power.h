@@ -20,6 +20,7 @@ typedef struct demand {
 } Demand;
 
 #include <math.h>
+#include <stdio.h>
 
 #define NULL 0
 
