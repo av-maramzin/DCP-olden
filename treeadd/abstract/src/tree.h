@@ -4,34 +4,35 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #define chatting printf
-#define PLAIN
 
-#include <vector>
-
-#include "Fractal.h"
+#include "Fractal_dynamic.h"
 
 using namespace abstract;
-using namespace std;
 
-typedef struct tree {
-    int val;
-    //struct tree *left, *right;
-} tree_t;
-using FractalElement_t = struct tree;
+using Fractal_Element_t = class Node;
+using Fractal_Seed_t = int;
+const size_t Fractal_Arity = 2;
+using Fractal_t = Fractal<Fractal_Element_t,
+                          Fractal_Seed_t,
+                          Fractal_Arity>;
 
-// [*] Build the Fractal of tree nodes
-// Call Fractal::grow() instead
-//extern tree_t *TreeAlloc (int level, int lo, int hi);
+class Node : public Fractal_t::Element {
+    
+    public:
+        
+        Node(Fractal_t::ElementInfo info) : Fractal_t::Element(info) {}
+        ~Node() {}
+        
+        void grow() override { val = 1; }
 
-// [*] Apply processing functions to the built Fractal
-// Functions to be passed into Fractal::apply()
-// These functions take Fractal element and process it
+        int val;
+};
 
-//int TreeAdd (int inc_level, tree_t *t);
-using FractalApply_TreeAdd_ret_t = int;
-using FractalApply_TreeAdd_func_t = FractalApply_TreeAdd_ret_t (*)(FractalElement_t* tree_node,
-                                                              const std::vector<FractalApply_TreeAdd_ret_t>& child_rets);
-FractalApply_TreeAdd_ret_t TreeAdd(FractalElement_t* tree_node, const std::vector<FractalApply_TreeAdd_ret_t>& child_rets);
+using TreeAdd_Compute_t = int;
+class TreeAdd : public Fractal_t::ComputeFunction<TreeAdd_Compute_t> {
+    public:
+        TreeAdd_Compute_t operator()(Node&, const std::vector<TreeAdd_Compute_t>&) override;
+};
 
+//
