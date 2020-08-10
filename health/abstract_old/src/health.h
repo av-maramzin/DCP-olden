@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "Fractal.h"
+#include "Fractal_static.h"
 
 using namespace abstract;
 
@@ -57,7 +57,9 @@ struct Hosp {
   struct List            inside;
   struct List            up;
 };
- 
+
+//
+
 struct Village {
     
     // [*] Remove all pointer-chained links out of 
@@ -72,7 +74,9 @@ struct Village {
     int                    label;
     long long              seed;
 };
-using FractalElement_t = struct Village;
+using FractalElementData_t = struct Village;
+using FractalElement_t = FractalElement<FractalElementData_t,4>;
+using GrowthSeed_t = int;
 
 void dealwithargs(int argc, char *argv[]);
 
@@ -80,22 +84,30 @@ void dealwithargs(int argc, char *argv[]);
 // Call Fractal::grow() instead
 //struct Village *alloc_tree(int level, int label, struct Village *back);
 
+using GrowthFunc_t = void (*)(FractalElementData_t*, const FractalElementInfo&, GrowthSeed_t); 
+void growth_func(FractalElementData_t* elem, const FractalElementInfo& info, GrowthSeed_t seed);
+
+using NextGrowthSeedFunc_t = void (*)(const GrowthSeed_t&, GrowthSeed_t&, int);
+void next_growth_seed_func(const GrowthSeed_t& parent_seed, GrowthSeed_t& next_child_seed, int next_child_num);
+
+using GrowthStopFunc_t = bool (*)(const FractalElementInfo&, const GrowthSeed_t&);
+bool growth_stop_func(const FractalElementInfo& info, const GrowthSeed_t& growth_seed);
+
 // [*] Apply processing functions to the built Fractal
 // Functions to be passed into Fractal::apply()
 // These functions take Fractal element and process it
 
 //struct List* sim(struct Village *village);
 using FractalApply_sim_ret_t = struct List*;
-using FractalApply_sim_func_t = FractalApply_sim_ret_t (*)(FractalElement_t* village,
+using FractalApply_sim_func_t = FractalApply_sim_ret_t (*)(FractalElementData_t* village,
                                                               const std::vector<FractalApply_sim_ret_t>& child_rets);
-FractalApply_sim_ret_t sim(FractalElement_t* village, const std::vector<FractalApply_sim_ret_t>& child_rets);
-
+FractalApply_sim_ret_t sim(FractalElementData_t* village, const std::vector<FractalApply_sim_ret_t>& child_rets);
 
 //struct Results get_results(struct Village *village);
 using FractalApply_get_results_ret_t = struct Results;
-using FractalApply_get_results_func_t = FractalApply_get_results_ret_t (*)(FractalElement_t* village,
+using FractalApply_get_results_func_t = FractalApply_get_results_ret_t (*)(FractalElementData_t* village,
                                                                         const std::vector<FractalApply_get_results_ret_t>& child_rets);
-FractalApply_get_results_ret_t get_results(FractalElement_t* village, const std::vector<FractalApply_get_results_ret_t>& child_rets);
+FractalApply_get_results_ret_t get_results(FractalElementData_t* village, const std::vector<FractalApply_get_results_ret_t>& child_rets);
 
 // [*] Internal functions to be called from enclosing
 // application functions
