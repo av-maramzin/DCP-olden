@@ -23,3 +23,5 @@ void dealwithargs(int argc, char* argv[]) {
 
     printf("max_level=%d  max_time=%d  seed=%d \n", max_level, (int)max_time, (int)seed);
 }
+
+//

@@ -16,8 +16,6 @@ int dealwithargs(int argc, char *argv[]);
 //    long 	level;
 //} startmsg_t;
 
-extern void growth_func(FractalElement_t*,const FractalElementInfo&);
-
 int main (int argc, char *argv[])
 {
 //    tree_t	*root;
@@ -29,14 +27,20 @@ int main (int argc, char *argv[])
     /* only processor 0 will continue here. */
     chatting("About to enter TreeAlloc\n");
 
-    using FractalGrowthFunc_t = void (*)(FractalElement_t*,const FractalElementInfo&);
-    int scaling_factor = 1;
-    Fractal<FractalElement_t,FractalGrowthFunc_t> fractal(growth_func, scaling_factor);
-    
+    //struct Village* top = 0;
+    Fractal<FractalElementData_t,2> fractal;
+
 //    root = TreeAlloc (level, 0, NumNodes);
-    int fractal_levels = level;
-    int fractal_seed_label = 0;
-    fractal.grow(fractal_levels,fractal_seed_label);    
+    unsigned int fractal_levels = level-1;
+    unsigned int fractal_seed_label = 0;
+    fractal.template grow<GrowthFunc_t,
+                          GrowthSeed_t,
+                          NextGrowthSeedFunc_t,
+                          GrowthStopFunc_t>(fractal_levels,
+                                            growth_func, 
+                                            fractal_seed_label, 
+                                            next_growth_seed_func,
+                                            growth_stop_func);
 
     chatting("About to enter TreeAdd\n");
 
@@ -58,7 +62,7 @@ int main (int argc, char *argv[])
 
 /* TreeAdd:
  */
-FractalApply_TreeAdd_ret_t TreeAdd(FractalElement_t* t, const std::vector<FractalApply_TreeAdd_ret_t>& child_rets)
+FractalApply_TreeAdd_ret_t TreeAdd(FractalElementData_t* t, const std::vector<FractalApply_TreeAdd_ret_t>& child_rets)
 {
 //  if (t == NULL)  {
 //    return 0;

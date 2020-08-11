@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
     Fractal<FractalElementData_t,4> fractal;
 
     //top = alloc_tree(max_level, 0, top);
-    unsigned int fractal_levels = max_level;
+    unsigned int fractal_levels = max_level-1;
     unsigned int fractal_seed_label = 0;
     fractal.template grow<GrowthFunc_t,
                           GrowthSeed_t,

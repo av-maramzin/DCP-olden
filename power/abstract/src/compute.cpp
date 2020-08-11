@@ -18,6 +18,7 @@
 
 static double P=1.0;
 static double Q=1.0;
+#pragma omp threadprivate(P,Q)
 
 /*----------------------------------------------------------------------*/
 /* Leaf optimization procedures                 */

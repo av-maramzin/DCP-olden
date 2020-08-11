@@ -93,14 +93,15 @@ void dealwithargs(int argc, char* argv[]);
 float my_rand(long long idum);
 struct Patient* generate_patient(struct Village* village);
 void put_in_hosp(struct Hosp* hosp, struct Patient* patient);
-void addList(struct List *list, struct Patient *patient);
-void removeList(struct List *list, struct Patient *patient);
-void check_patients_inside(struct Village *village, struct List *list);
-struct List *check_patients_assess(struct Village *village, struct List *list);
-void check_patients_waiting(struct Village *village, struct List *list);
-float get_num_people(struct Village *village);
-float get_total_time(struct Village *village);
-float get_total_hosps(struct Village *village);
+void addList(struct List* list, struct Patient* patient);
+void removeList(struct List* list, struct Patient* patient);
+void dumpList(struct List* list);
+void check_patients_inside(struct Village* village, struct List* list);
+struct List* check_patients_assess(struct Village* village, struct List* list);
+void check_patients_waiting(struct Village* village, struct List *list);
+float get_num_people(struct Village* village);
+float get_total_time(struct Village* village);
+float get_total_hosps(struct Village* village);
 
 #endif
 

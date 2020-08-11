@@ -6,7 +6,7 @@
 #include "tree.h"
 //extern void *malloc(unsigned);
 
-void growth_func(FractalElement_t* tree_node, const FractalElementInfo& info) {
+void growth_func(FractalElementData_t* tree_node, const FractalElementInfo& info, GrowthSeed_t s) {
 //tree_t *TreeAlloc (int level, int lo, int proc) {
 //  if (level == 0)
 //    return NULL;
@@ -23,3 +23,14 @@ void growth_func(FractalElement_t* tree_node, const FractalElementInfo& info) {
     return;
 }
 
+void next_growth_seed_func(const GrowthSeed_t& parent_seed, GrowthSeed_t& next_child_seed, int next_child_num)
+{
+    return;
+}
+
+bool growth_stop_func(const FractalElementInfo& info, const GrowthSeed_t& growth_seed)
+{
+    return false;
+}
+
+//

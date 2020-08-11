@@ -20,7 +20,7 @@ void Village::grow(Fractal_t::Seed_t s) {
         return;
     } else {
         this->label = s;
-        this->seed = s * (IQ + seed); 
+        this->seed = s * (IQ + ::seed); 
         this->hosp.personnel = (int) pow(2, this->element_info().level-1);
         this->hosp.free_personnel = this->hosp.personnel;
         this->hosp.num_waiting_patients = 0;
@@ -38,7 +38,20 @@ void Village::grow(Fractal_t::Seed_t s) {
         this->hosp.up.patient = NULL;      /* ADDED FOR LLVM [OLDEN BUGS!] */
         this->returned.back = NULL;
         this->returned.forward = NULL;
-        
+        this->returned.patient = NULL;
+
+        // DEBUG PRINT
+        //std::cout << "V[l=" << this->element_info().level 
+        //          << ",d=" << this->element_info().depth 
+        //          << ",i=" << this->element_info().index << "]" << std::endl;
+
+        //std::cout << "GROW: " << std::endl;
+        //std::cout << "label=" << this->label << std::endl; 
+        //std::cout << "seed=" << this->seed << std::endl; 
+        //std::cout << "personnel=" << this->hosp.personnel << std::endl; 
+
+        //std::cout << std::endl;
+
         return;
     }
 }
@@ -210,8 +223,8 @@ int main(int argc, char *argv[])
     fractal.set_impl_type(Fractal_t::ImplType::parallel);
 
     // grow the created framework
-    Fractal_t::Seed_t seed = 0;
-    fractal.grow(max_level, seed);
+    Fractal_t::Seed_t s = 0;
+    fractal.grow(max_level-1, s);
 
     chatting("\n\n    Columbian Health Care Simulator\n\n");
     chatting("Working...\n");
@@ -274,6 +287,33 @@ Sim::Compute_t Sim::operator()(Village& village, const std::vector<Sim::Compute_
     if ( (patient = generate_patient(&village)) != nullptr) {  
         put_in_hosp(&(village.hosp), patient);
     }
+
+    // DEBUG PRINT
+    //std::cout << "V[l=" << village.element_info().level 
+    //          << ",d=" << village.element_info().depth 
+    //          << ",i=" << village.element_info().index << "]" << std::endl;
+
+    //std::cout << "SIM: " << std::endl;
+    //std::cout << "hosp personnel=" << village.hosp.personnel << std::endl; 
+    //std::cout << "hosp free personnel=" << village.hosp.free_personnel << std::endl; 
+    //std::cout << "num waiting patients=" << village.hosp.num_waiting_patients << std::endl; 
+
+    //std::cout << std::endl;
+    
+    //std::cout << "LIST: hosp waiting" << std::endl;
+    //dumpList(&village.hosp.waiting);
+    
+    //std::cout << "LIST: hosp assess" << std::endl;
+    //dumpList(&village.hosp.assess); 
+    
+    //std::cout << "LIST: hosp inside" << std::endl;
+    //dumpList(&village.hosp.inside);
+    
+    //std::cout << "LIST: hosp up" << std::endl;
+    //dumpList(&village.hosp.up);
+    
+    //std::cout << "LIST: up" << std::endl;
+    //dumpList(up);
 
     return up;
 }

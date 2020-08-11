@@ -9,38 +9,64 @@
 #include <stdlib.h>
 #include "health.h"
 
-void addList(struct List *list, struct Patient *patient) {
-  struct List *b;
-
-  while (list != NULL) {
-    b = list;
-    list = list->forward; }
-  
-  list = (struct List *)malloc(sizeof(struct List));
-  list->patient = patient;
-  list->forward = NULL;
-  list->back = b;
-  b->forward = list;
-} 
-
-void removeList(struct List *list, struct Patient *patient) {
-  struct List          *l1,*l2;
-  struct Patient       *p;
-
-  p = list->patient;
-  while(p != patient) {
-      list = list->forward; 
-      p = list->patient;
-  }
+void addList(struct List* list, struct Patient* patient) {
     
-  l1 = list->back;
-  l2 = list->forward;
-  l1->forward = l2;
-  if (list->forward != NULL) {
-    l1 = list->forward;
-    l2 = list->back;
-    l1->back = l2;
-  }
-  /*free(list);*/
+    struct List* b;
+
+    while (list != NULL) {
+        b = list;
+        list = list->forward; 
+    }
+  
+    list = (struct List*) malloc(sizeof(struct List));
+    list->patient = patient;
+    list->forward = NULL;
+    list->back = b;
+    b->forward = list;
 }
-     
+
+void removeList(struct List* list, struct Patient* patient) {
+    struct List* l1;
+    struct List* l2;
+    struct Patient* p;
+
+    p = list->patient;
+    while (p != patient) {
+        list = list->forward; 
+        p = list->patient;
+    }
+    
+    l1 = list->back;
+    l2 = list->forward;
+    l1->forward = l2;
+    if (list->forward != NULL) {
+        l1 = list->forward;
+        l2 = list->back;
+        l1->back = l2;
+    }
+    /*free(list);*/
+}
+
+void dumpList(struct List* list) {
+    
+    if (list == nullptr) return;
+
+    int num = 0;
+    while (list != nullptr) {
+        struct Patient* p = list->patient;
+
+        if (p != nullptr) {
+            std::cout << "p[" << num << "]: " 
+                      << "hosps_visited=" << p->hosps_visited << " " 
+                      << "time=" << p->time << " "
+                      << "time_left=" << p->time_left << std::endl; 
+            num++;
+        }
+
+        list = list->forward;
+    }
+    
+    std::cout << std::endl;
+}
+
+//

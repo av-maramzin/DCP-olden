@@ -23,8 +23,4 @@ float my_rand(long long idum)
   return answer; 
 }
 
-
-
-
-
-
+//

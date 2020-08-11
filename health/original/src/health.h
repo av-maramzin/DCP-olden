@@ -79,14 +79,18 @@ struct Village {
   struct List            returned;
   struct Village         *back;
 #endif
+  int level;
+  int depth;
+  int index;
 };
 
-struct Village *alloc_tree(int level, int label, struct Village *back);
+struct Village *alloc_tree(int level, int label, struct Village *back, int index);
 void dealwithargs(int argc, char *argv[]);
 float my_rand(long long idum);
 struct Patient *generate_patient(struct Village *village);
 void put_in_hosp(struct Hosp *hosp, struct Patient *patient);
 void addList(struct List *list, struct Patient *patient);
+void dumpList(struct List* list);
 void removeList(struct List *list, struct Patient *patient);
 struct List *sim(struct Village *village);
 void check_patients_inside(struct Village *village, struct List *list);

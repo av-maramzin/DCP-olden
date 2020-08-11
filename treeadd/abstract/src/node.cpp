@@ -52,7 +52,6 @@ int TreeAdd::operator()(Node& elem, const std::vector<int>& child_rets)
     value += elem.val;
 
     return value;
-
 }
 
 //

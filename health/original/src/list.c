@@ -43,4 +43,25 @@ void removeList(struct List *list, struct Patient *patient) {
   }
   /*free(list);*/
 }
-     
+
+void dumpList(struct List* list) {
+    
+    if (list == NULL) return;
+
+    int num = 0;
+    while (list != NULL) {
+        struct Patient* p = list->patient;
+        
+        if (p != NULL) {
+            printf("p[%d]: hosps_visited=%d time=%d time_left=%d\n", 
+                    num, p->hosps_visited, p->time, p->time_left);
+            num++;
+        }
+
+        list = list->forward;
+    }
+    
+    printf("\n");
+}
+
+//

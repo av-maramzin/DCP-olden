@@ -48,7 +48,7 @@ void QuadStruct::grow(Fractal_t::Seed_t seed) {
     } else if (intersect==2) {
         this->color=black;
     } else {
-        if (!this->element_info().level) {
+        if (this->element_info().level == 1) {
             this->color = black;
 	} else {
             this->color = grey;
@@ -112,7 +112,7 @@ bool QuadStruct::growth_stop_condition() {
     } else if (intersect == 2) {
         return true;
     } else {
-        if (!this->element_info().level) {
+        if (this->element_info().level == 1) {
 	    return true;
         } else {
 	    return false;

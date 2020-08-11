@@ -72,7 +72,7 @@ void growth_func(FractalElementData_t* elem, const FractalElementInfo& info, Gro
 //        std::cout << "FractalElement(level=" << info.level << ", size=" << elem->size << ", color=black, ct=" << ct_str << std::endl;
         elem->color=black;
     } else {
-        if (!info.level) {
+        if (info.level == 1) {
 //            std::cout << "FractalElement(level=" << info.level << ", size=" << elem->size << ", color=black, ct=" << ct_str << std::endl;
             elem->color = black;
 	} else {
@@ -137,7 +137,7 @@ bool growth_stop_func(const FractalElementInfo& info, const GrowthSeed_t& growth
     } else if (intersect == 2) {
         return true;
     } else {
-        if (!info.level) {
+        if (info.level == 1) {
 	    return true;
         } else {
 	    return false;
