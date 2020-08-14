@@ -165,6 +165,9 @@ Perimeter::Compute_t Perimeter::operator()(QuadStruct& tree, const std::vector<P
 
 extern int dealwithargs(int argc, char * argv[]);
 
+extern bool parallel;
+extern bool balanced;
+
 int main(int argc, char *argv[])
 {
     //QuadTree tree;
@@ -181,7 +184,22 @@ int main(int argc, char *argv[])
     
     //tree=MakeTree(2048*1024,0,0,0,NumNodes-1,NULL,southeast,level); // just 2048
     Fractal_t fractal;
-    fractal.set_impl_type(Fractal_t::ImplType::parallel);
+
+    if (parallel) {
+        fractal.set_impl_type(Fractal_t::ImplType::parallel);
+        chatting("parallel\n");
+    } else {
+        fractal.set_impl_type(Fractal_t::ImplType::sequential);
+        chatting("sequential\n");
+    }
+
+    if (balanced) {
+        fractal.set_type(Fractal_t::Type::balanced);
+        chatting("balanced\n");
+    } else {
+        fractal.set_type(Fractal_t::Type::unbalanced);
+        chatting("unbalanced\n");
+    }
 
     Fractal_t::Seed_t growth_seed;
     growth_seed.size = 2048;

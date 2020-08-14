@@ -213,14 +213,31 @@ struct Patient *generate_patient(struct Village *village)
   return NULL; 
 }
 
+extern bool parallel;
+extern bool balanced;
+
 int main(int argc, char *argv[]) 
 { 
     dealwithargs(argc, argv);
  
     // create Fractal framework and set its type
     Fractal_t fractal;
-    fractal.set_type(Fractal_t::Type::unbalanced);
-    fractal.set_impl_type(Fractal_t::ImplType::parallel);
+    
+    if (parallel) {
+        fractal.set_impl_type(Fractal_t::ImplType::parallel);
+        chatting("parallel\n");
+    } else {
+        fractal.set_impl_type(Fractal_t::ImplType::sequential);
+        chatting("sequential\n");
+    }
+    
+    if (balanced) {
+        fractal.set_type(Fractal_t::Type::balanced);
+        chatting("balanced\n");
+    } else {
+        fractal.set_type(Fractal_t::Type::unbalanced);
+        chatting("unbalanced\n");
+    }
 
     // grow the created framework
     Fractal_t::Seed_t s = 0;

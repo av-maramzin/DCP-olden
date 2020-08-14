@@ -10,6 +10,9 @@ extern int NumNodes;
 
 extern int runs;
 
+extern bool parallel;
+extern bool balanced;
+
 int dealwithargs(int argc, char *argv[]);
 
 int main(int argc, char* argv[])
@@ -24,8 +27,24 @@ int main(int argc, char* argv[])
     chatting("About to enter TreeAlloc\n");
 
     Fractal_t tree;
+    
+    if (parallel) {
+        tree.set_impl_type(Fractal_t::ImplType::parallel);
+        chatting("parallel\n");
+    } else {
+        tree.set_impl_type(Fractal_t::ImplType::sequential);
+        chatting("sequential\n");
+    }
+
+    if (balanced) {
+        tree.set_type(Fractal_t::Type::balanced);
+        chatting("balanced\n");
+    } else {
+        tree.set_type(Fractal_t::Type::unbalanced);
+        chatting("unbalanced\n");
+    }
+    
     tree.grow(level-1);
-    tree.set_impl_type(Fractal_t::ImplType::parallel);
 
     chatting("About to enter TreeAdd\n");
 
@@ -44,13 +63,10 @@ int main(int argc, char* argv[])
 
 int TreeAdd::operator()(Node& elem, const std::vector<int>& child_rets)
 {
-    int value = 0;
+    int value = elem.val;
     for (auto val : child_rets) {
         value += val;
     }
-    
-    value += elem.val;
-
     return value;
 }
 
