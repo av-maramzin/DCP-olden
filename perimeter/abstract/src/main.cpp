@@ -62,7 +62,7 @@ static ChildType reflect(Direction d, ChildType ct)
 }
 
 CountTree::Compute_t CountTree::operator()(QuadStruct& tree, const std::vector<CountTree::Compute_t>& child_rets) {
-    int ret = 0;
+    long long int ret = 0;
 
     if (!child_rets.empty()) {
         for (auto child_ret : child_rets) {
@@ -99,7 +99,7 @@ static QuadStruct* gtequal_adj_neighbor(QuadStruct* tree, Direction d)
     else return q;
 }
 
-static int sum_adjacent(QuadStruct* p, ChildType q1, ChildType q2, int size)
+static long long int sum_adjacent(QuadStruct* p, ChildType q1, ChildType q2, long long int size)
 {
     if (p->color == grey) 
     {
@@ -116,7 +116,7 @@ static int sum_adjacent(QuadStruct* p, ChildType q1, ChildType q2, int size)
 //int perimeter(QuadTree tree, int size)
 Perimeter::Compute_t Perimeter::operator()(QuadStruct& tree, const std::vector<Perimeter::Compute_t>& child_rets) {
 
-    int retval = 0;
+    long long int retval = 0;
     QuadStruct* neighbor;
 
     if (tree.color == grey) {
@@ -171,7 +171,7 @@ extern bool balanced;
 int main(int argc, char *argv[])
 {
     //QuadTree tree;
-    int count;
+    long long int count;
     int level;
 
 #ifdef DEBUG
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
     }
 
     Fractal_t::Seed_t growth_seed;
-    growth_seed.size = 2048;
+    growth_seed.size = 65536;
     growth_seed.center_x = 0;
     growth_seed.center_y = 0;
     growth_seed.lo_proc = 0;
@@ -218,13 +218,13 @@ int main(int argc, char *argv[])
     CountTree comp_func;
     count = fractal.template compute<CountTree::Compute_t>(comp_func);
     
-    chatting("# of leaves is %d\n", count);
+    chatting("# of leaves is %lld\n", count);
 
     //count=perimeter(tree,4096);
     Perimeter func;
     count = fractal.template compute<Perimeter::Compute_t>(func);
 
-    chatting("perimeter is %d\n",count);
+    chatting("perimeter is %lld\n",count);
 
     exit(0);
 }

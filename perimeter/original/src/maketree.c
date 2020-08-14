@@ -3,16 +3,17 @@
 #include "perimeter.h"
 #include <stdlib.h>
 
-static int CheckOutside(int x, int y) 
+static int CheckOutside(long long int x, long long int y) 
 {
-  int euclid = x*x+y*y;
+  unsigned long long int euclid = x*x+y*y;
 
-  if (euclid > 4194304) return 1;  
-  if (euclid < 1048576) return -1; 
+  if (euclid > 4294967296) return 1;  
+  if (euclid < 1073741824) return -1; 
+ 
   return 0;
 }
 
-static int CheckIntersect(int center_x, int center_y, int size)
+static int CheckIntersect(long long int center_x, long long int center_y, long long int size)
 {
   int sum;
   
@@ -28,7 +29,7 @@ static int CheckIntersect(int center_x, int center_y, int size)
   return 1;
 }  
 
-QuadTree MakeTree(int size, int center_x, int center_y, int lo_proc,
+QuadTree MakeTree(long long int size, long long int center_x, long long int center_y, int lo_proc,
 		  int hi_proc, QuadTree parent, ChildType ct, int level) 
 {
   int intersect=0;

@@ -17,9 +17,9 @@ typedef enum { north, east, south, west } Direction;
 
 using Fractal_Element_t = class QuadStruct;
 struct growth_seed {
-    int size;
-    int center_x;
-    int center_y;
+    long long int size;
+    long long int center_x;
+    long long int center_y;
     int lo_proc;
     int hi_proc;
     ChildType ct;
@@ -41,16 +41,16 @@ class QuadStruct : public Fractal_t::Element {
 
         Color color;
         ChildType childtype;
-        int size;
+        long long int size;
 };
 
-using CountTree_Compute_t = int;
+using CountTree_Compute_t = long long int;
 class CountTree : public Fractal_t::ComputeFunction<CountTree_Compute_t> {
     public:
         Compute_t operator()(QuadStruct& tree, const std::vector<Compute_t>& child_rets);
 };
 
-using Perimeter_Compute_t = int;
+using Perimeter_Compute_t = long long int;
 class Perimeter : public Fractal_t::ComputeFunction<Perimeter_Compute_t> {
     public:
         Compute_t operator()(QuadStruct& tree, const std::vector<Compute_t>& child_rets);

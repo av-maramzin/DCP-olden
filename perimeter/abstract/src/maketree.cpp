@@ -3,17 +3,17 @@
 #include "perimeter.h"
 #include <stdlib.h>
 
-static int CheckOutside(int x, int y) 
+static int CheckOutside(long long int x, long long int y) 
 {
-    int euclid = x*x+y*y;
+    unsigned long long int euclid = x*x+y*y;
 
-    if (euclid > 4194304) return 1;  
-    if (euclid < 1048576) return -1; 
-    
+    if (euclid > 4294967296) return 1;  
+    if (euclid < 1073741824) return -1; 
+ 
     return 0;
 }
 
-static int CheckIntersect(int center_x, int center_y, int size)
+static int CheckIntersect(long long int center_x, long long int center_y, long long int size)
 {
     int sum;
   
@@ -35,7 +35,7 @@ static int CheckIntersect(int center_x, int center_y, int size)
 void QuadStruct::grow(Fractal_t::Seed_t seed) {
 
     int intersect = 0;
-    int size = seed.size;
+    long long int size = seed.size;
     
     this->childtype = seed.ct;
     this->size = size;
@@ -62,7 +62,7 @@ Fractal_t::Seed_t QuadStruct::spawn_child_seed(int child_id) {
     Fractal_t::Seed_t child_seed;
 
     child_seed.ct = (ChildType)child_id;
-    int size = child_seed.size = parent_seed.size/2;
+    long long int size = child_seed.size = parent_seed.size/2;
 
     int mid1, mid2;
     mid1 = (parent_seed.lo_proc + parent_seed.hi_proc)/2;
@@ -101,7 +101,7 @@ Fractal_t::Seed_t QuadStruct::spawn_child_seed(int child_id) {
 bool QuadStruct::growth_stop_condition() {
 
     int intersect = 0;
-    int size = this->get_seed().size;
+    long long int size = this->get_seed().size;
 
     intersect = CheckIntersect(this->get_seed().center_x, this->get_seed().center_y, size);
 

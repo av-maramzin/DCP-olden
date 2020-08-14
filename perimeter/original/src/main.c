@@ -58,7 +58,7 @@ static ChildType reflect(Direction d, ChildType ct)
     }
 }
 
-int CountTree(QuadTree tree) 
+long long int CountTree(QuadTree tree) 
 {
   QuadTree nw,ne,sw,se;
 
@@ -107,7 +107,7 @@ static QuadTree gtequal_adj_neighbor(QuadTree tree, Direction d)
   else return q;
 }
 
-static int sum_adjacent(QuadTree p, ChildType q1, ChildType q2, int size)
+static long long int sum_adjacent(QuadTree p, ChildType q1, ChildType q2, long long int size)
 {
   if (p->color==grey) 
     {
@@ -121,9 +121,9 @@ static int sum_adjacent(QuadTree p, ChildType q1, ChildType q2, int size)
   else return 0;
 }
 
-int perimeter(QuadTree tree, int size)
+long long int perimeter(QuadTree tree, long long int size)
 {
-  int retval = 0;
+  long long int retval = 0;
   QuadTree neighbor;
 
   if (tree->color==grey) 
@@ -188,7 +188,7 @@ extern int dealwithargs(int argc, char * argv[]);
 int main(int argc, char *argv[])
 {
   QuadTree tree;
-  int count;
+  unsigned long long int count;
   int level;
 
 #ifndef TORONTO
@@ -207,11 +207,11 @@ int main(int argc, char *argv[])
 
 #ifndef TORONTO
   chatting("Perimeter with %d levels on %d processors\n",level,__NumNodes);
-  tree=MakeTree(2048,0,0,0,__NumNodes-1,NULL,southeast,level);
+  tree=MakeTree(65536,0,0,0,__NumNodes-1,NULL,southeast,level);
 #else
   chatting("Perimeter with %d levels on %d processors\n",level,NumNodes);
   //tree=MakeTree(2048*1024,0,0,0,NumNodes-1,NULL,southeast,level);
-  tree=MakeTree(2048,0,0,0,NumNodes-1,NULL,southeast,level);
+  tree=MakeTree(65536,0,0,0,NumNodes-1,NULL,southeast,level);
 #endif
 
 #ifdef DEBUG
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 #endif
 
   count=CountTree(tree);
-  chatting("# of leaves is %d\n",count);
+  chatting("# of leaves is %lld\n",count);
 
 #ifndef TORONTO
   ClearAllStats();
@@ -230,17 +230,17 @@ int main(int argc, char *argv[])
 
 #ifndef TORONTO
   //count=perimeter(tree,4096);
-  count=perimeter(tree,2048);
+  count=perimeter(tree,65536);
 #else
   //count=perimeter(tree,4096);
-  count=perimeter(tree,2048);
+  count=perimeter(tree,65536);
 #endif
 
 #ifndef TORONTO
   CMMD_node_timer_stop(0);
 #endif
 
-  chatting("perimeter is %d\n",count);
+  chatting("perimeter is %lld\n",count);
 
 #ifndef TORONTO
   chatting("Time elapsed = %f seconds\n",CMMD_node_timer_elapsed(0));
@@ -251,11 +251,4 @@ int main(int argc, char *argv[])
 
   exit(0);
 }
-
-
-
-
-
-
-
 
