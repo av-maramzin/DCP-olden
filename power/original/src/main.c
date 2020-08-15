@@ -52,12 +52,19 @@ double map_Q[36] =
 #define      PER_INDEX_I       0.002
 #define      MAX_THETA_I       0.199
 
+extern int dealwithargs(int argc, char * argv[]);
+
 int main(int argc,char *argv[])
 {
   Root r;
   int i,finished=0;
   double d_theta_R,d_theta_I;
 
+  dealwithargs(argc, argv);
+
+  printf("Power: feeders=%d laterals=%d branches=%d leaves=%d\n",
+          feeders_num, laterals_num, branches_num, leaves_num);
+    
   printf("Past initialization\n");
 
   /* initial pass */

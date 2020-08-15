@@ -42,7 +42,7 @@ void Compute_Tree(Root r) {
 
   tmp.P = 0.0;
   tmp.Q = 0.0;
-  for (i=0; i<NUM_FEEDERS; i++) {
+  for (i=0; i<feeders_num; i++) {
     l = r->feeders[i];
     theta_R = r->theta_R;
     theta_I = r->theta_I;
@@ -135,7 +135,7 @@ Demand Compute_Branch(Branch br, double theta_R, double theta_I,
   /* Initialize tmp */
   tmp.P = 0.0; tmp.Q = 0.0;
 
-  for (i=0; i<LEAVES_PER_BRANCH; i++) {
+  for (i=0; i<leaves_num; i++) {
     l = br->leaves[i];
     a2 = Compute_Leaf(l,new_pi_R,new_pi_I);
     tmp.P += a2.P;

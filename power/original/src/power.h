@@ -24,24 +24,29 @@ typedef struct demand {
 
 #define NULL 0
 
-#ifdef SMALL_PROBLEM_SIZE   /* __llvm__ SCALED BACK SETTINGS */
-#define NUM_FEEDERS 8
-#define LATERALS_PER_FEEDER 16
-#define BRANCHES_PER_LATERAL 5
-#define LEAVES_PER_BRANCH 10
-#else
-#if 0  /* DEFAULT SETTINGS */
-#define NUM_FEEDERS 10
-#define LATERALS_PER_FEEDER 20
-#define BRANCHES_PER_LATERAL 5
-#define LEAVES_PER_BRANCH 10
-#else  /* SCALED UP SETTINGS */
-#define NUM_FEEDERS 11
-#define LATERALS_PER_FEEDER 21
-#define BRANCHES_PER_LATERAL 6
-#define LEAVES_PER_BRANCH 12
-#endif
-#endif
+//#ifdef SMALL_PROBLEM_SIZE   /* __llvm__ SCALED BACK SETTINGS */
+//#define NUM_FEEDERS 8
+//#define LATERALS_PER_FEEDER 16
+//#define BRANCHES_PER_LATERAL 5
+//#define LEAVES_PER_BRANCH 10
+//#else
+//#if 0  /* DEFAULT SETTINGS */
+//#define NUM_FEEDERS 10
+//#define LATERALS_PER_FEEDER 20
+//#define BRANCHES_PER_LATERAL 5
+//#define LEAVES_PER_BRANCH 10
+//#else  /* SCALED UP SETTINGS */
+//#define NUM_FEEDERS 11
+//#define LATERALS_PER_FEEDER 21
+//#define BRANCHES_PER_LATERAL 6
+//#define LEAVES_PER_BRANCH 12
+//#endif
+//#endif
+
+extern int feeders_num;
+extern int laterals_num;
+extern int branches_num;
+extern int leaves_num;
 
 #define F_EPSILON 0.000001
 #define G_EPSILON 0.000001
@@ -55,7 +60,8 @@ typedef struct root {
   Demand last;
   double last_theta_R; 
   double last_theta_I;
-  struct lateral *feeders[NUM_FEEDERS];
+  struct lateral** feeders;
+  //struct lateral *feeders[NUM_FEEDERS];
 } *Root;  /* sizeof(struct root) = 108 bytes */
 
 typedef struct lateral {
@@ -75,7 +81,8 @@ typedef struct branch {
   double R;
   double X;
   struct branch *next_branch;
-  struct leaf *leaves[LEAVES_PER_BRANCH];
+  struct leaf** leaves;
+  //struct leaf *leaves[LEAVES_PER_BRANCH];
 } *Branch; /* sizeof(struct branch) = 92 bytes */
 
 typedef struct leaf {

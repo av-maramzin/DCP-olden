@@ -166,7 +166,6 @@ Perimeter::Compute_t Perimeter::operator()(QuadStruct& tree, const std::vector<P
 extern int dealwithargs(int argc, char * argv[]);
 
 extern bool parallel;
-extern bool balanced;
 
 int main(int argc, char *argv[])
 {
@@ -193,14 +192,6 @@ int main(int argc, char *argv[])
         chatting("sequential\n");
     }
 
-    if (balanced) {
-        fractal.set_type(Fractal_t::Type::balanced);
-        chatting("balanced\n");
-    } else {
-        fractal.set_type(Fractal_t::Type::unbalanced);
-        chatting("unbalanced\n");
-    }
-
     Fractal_t::Seed_t growth_seed;
     growth_seed.size = 65536;
     growth_seed.center_x = 0;
@@ -208,7 +199,8 @@ int main(int argc, char *argv[])
     growth_seed.lo_proc = 0;
     growth_seed.hi_proc = NumNodes-1;
     growth_seed.ct = southeast;
-
+        
+    fractal.set_impl_type(Fractal_t::ImplType::sequential);
     fractal.grow(level, growth_seed);
         
 #ifdef DEBUG
@@ -216,11 +208,13 @@ int main(int argc, char *argv[])
 #endif
 
     CountTree comp_func;
+    fractal.set_impl_type(Fractal_t::ImplType::sequential);
     count = fractal.template compute<CountTree::Compute_t>(comp_func);
     
     chatting("# of leaves is %lld\n", count);
 
     //count=perimeter(tree,4096);
+    fractal.set_impl_type(Fractal_t::ImplType::parallel);
     Perimeter func;
     count = fractal.template compute<Perimeter::Compute_t>(func);
 

@@ -19,10 +19,14 @@ Root::Root()
     theta_R = 0.8;
     theta_I = 0.16;
    
-    size_t reduce_width = NUM_FEEDERS;
-    
+    size_t reduce_width = feeders_num;
+
+    if (parallel) {
+        feeders.set_impl_type(Reduce_Feeder::ImplType::parallel);
+    } else {
+        feeders.set_impl_type(Reduce_Feeder::ImplType::sequential);
+    }
     feeders.grow(reduce_width);
-    feeders.set_impl_type(Reduce_Feeder::ImplType::parallel);
 }
 
 Root::~Root() {} 
@@ -36,7 +40,7 @@ Feeder::~Feeder() {}
 
 void Feeder::grow()
 {
-    size_t fold_depth = LATERALS_PER_FEEDER;
+    size_t fold_depth = laterals_num;
     fold_lateral.grow(fold_depth-1);
 }
 
@@ -54,7 +58,7 @@ void Lateral::grow()
     alpha = 0.0;
     beta = 0.0;
 
-    size_t fold_depth = BRANCHES_PER_LATERAL;
+    size_t fold_depth = branches_num;
     fold_branch.grow(fold_depth-1);
 }
 
@@ -72,7 +76,13 @@ void Branch::grow()
     alpha = 0.0;
     beta = 0.0;
 
-    size_t reduce_width = LEAVES_PER_BRANCH;
+    size_t reduce_width = leaves_num;
+
+    if (parallel) {
+        leaves.set_impl_type(Reduce_Leaf::ImplType::parallel);
+    } else {
+        leaves.set_impl_type(Reduce_Leaf::ImplType::sequential);
+    }
     leaves.grow(reduce_width);
 }
 

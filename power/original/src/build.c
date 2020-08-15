@@ -20,9 +20,10 @@ Root build_tree()
 
   t = (Root) malloc(sizeof(*t));
 
-  for (i=0; i<NUM_FEEDERS; i++) {
+  t->feeders = (Lateral*) malloc(sizeof(Lateral)*feeders_num);
+  for (i=0; i<feeders_num; i++) {
     /* Insert future here, split into two loops */
-    l = build_lateral(i*LATERALS_PER_FEEDER,LATERALS_PER_FEEDER);
+    l = build_lateral(i*laterals_num,laterals_num);
     t->feeders[i]=l;
   }
   t->theta_R = 0.8;
@@ -40,8 +41,8 @@ Lateral build_lateral(int i, int num)
   l = (Lateral) malloc(sizeof(*l));
 
   next = build_lateral(i,num-1);
-  b = build_branch(i*BRANCHES_PER_LATERAL,(num-1)*BRANCHES_PER_LATERAL,
-    BRANCHES_PER_LATERAL);
+  b = build_branch(i*branches_num,(num-1)*branches_num,
+    branches_num);
 
   l->next_lateral = next;
   l->branch = b;
@@ -64,7 +65,8 @@ Branch build_branch(int i, int j, int num)
   /* fill in children */
   b->next_branch= build_branch(i,j,num-1);
 
-  for (i=0; i<LEAVES_PER_BRANCH; i++) {
+  b->leaves = (Leaf*) malloc(sizeof(Leaf)*leaves_num);
+  for (i=0; i<leaves_num; i++) {
     l = build_leaf();
     b->leaves[i] = l;
   }

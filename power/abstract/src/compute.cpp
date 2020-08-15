@@ -48,9 +48,19 @@ Demand Root::compute() {
     //        this->theta_R, this->theta_I, this->theta_R, this->theta_I);
     
     // do an injection into the reduction
+    if (parallel) {
+        feeders.set_impl_type(Reduce_Feeder::ImplType::parallel);
+    } else {
+        feeders.set_impl_type(Reduce_Feeder::ImplType::sequential);
+    }
     feeders.inject(inject_data);
     // create a compute function object and call the API 
     Feeder_ComputeFunc compute_func;
+    if (parallel) {
+        feeders.set_impl_type(Reduce_Feeder::ImplType::parallel);
+    } else {
+        feeders.set_impl_type(Reduce_Feeder::ImplType::sequential);
+    }
     a = feeders.template compute<Demand>(compute_func);
     // update the Root
     this->D.P = a.P;
@@ -203,10 +213,20 @@ Branch_ComputeFunc::Compute_t Branch_ComputeFunc::operator()(Fold_Branch::Elemen
     leaf_inject_data.pi_R = fold_inject_data.pi_R;
     leaf_inject_data.pi_I = fold_inject_data.pi_I;
     
+    if (parallel) {
+        element.leaves.set_impl_type(Reduce_Leaf::ImplType::parallel);
+    } else {
+        element.leaves.set_impl_type(Reduce_Leaf::ImplType::sequential);
+    }
     element.leaves.inject(leaf_inject_data);
    
     Leaf_ComputeFunc compute_func; 
     Demand tmp;
+    if (parallel) {
+        element.leaves.set_impl_type(Reduce_Leaf::ImplType::parallel);
+    } else {
+        element.leaves.set_impl_type(Reduce_Leaf::ImplType::sequential);
+    }
     tmp = element.leaves.template compute<Leaf_ComputeFunc::Compute_t>(compute_func);
     
     //printf("COMPUTE Leaves [%d] = {P=%4.2f, Q=%4.2f}\n", element.element_info().index, tmp.P, tmp.Q); 

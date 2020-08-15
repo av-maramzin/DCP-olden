@@ -7,34 +7,21 @@
 int NumNodes;
 
 bool parallel;
-bool balanced;
 
 int dealwithargs(int argc, char *argv[])
 {
   int level;
 
-    if (argc > 4)
-        if (std::atoi(argv[4]) == 1) {
-            balanced = true;
-        } else if (std::atoi(argv[4]) == 0) {
-            balanced = false;
-        } else {
-            balanced = false;
-        }
-    else
-        balanced = false;
-
-
-    if (argc > 3)
-      if (std::atoi(argv[3]) == 1) {
-          parallel = true;
-      } else if (std::atoi(argv[3]) == 0) {
-          parallel = false;
-      } else {
-          parallel = false;
-      }
+  if (argc > 3)
+    if (std::atoi(argv[3]) == 1) {
+        parallel = true;
+    } else if (std::atoi(argv[3]) == 0) {
+        parallel = false;
+    } else {
+        parallel = false;
+    }
   else
-      parallel = false;
+    parallel = false;
 
   if (argc > 2)
     NumNodes = std::atoi(argv[2]);
